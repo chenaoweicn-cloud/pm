@@ -4,9 +4,12 @@
 
 ## 当前状态
 
-📋 **需求规格已确认** — 见 [`docs/spec.md`](docs/spec.md)
+- **需求规格** — [`docs/spec.md`](docs/spec.md)
+- **V1 实现计划（38 任务）** — [`docs/plans/v1/`](docs/plans/v1/)
+- **前端原型（Things 风格）** — 已实现，`pnpm dev` 启动，使用 mock 数据
+- **Tauri + SQLite 后端** — 待实现
 
-下一步：生成实现计划 → 进入开发。
+下一步：实现后端，把 `src/lib/mockData.ts` 替换为 `src/lib/api.ts`（IPC 契约见任务 24）。
 
 ## 核心目标
 
@@ -15,12 +18,18 @@
 
 ## 技术栈
 
-- Tauri 2.x + Rust
-- React + TypeScript + Vite
-- shadcn/ui + Tailwind
-- SQLite（本地单文件，无云同步）
+- 已落地：Vite · React 18 · TypeScript · pnpm
+- 计划：Tauri 2.x · Rust · rusqlite · TanStack Query · SQLite
 
-## 数据
+## 本地运行
+
+```bash
+pnpm install
+pnpm dev        # http://localhost:5173
+pnpm build      # 严格类型检查 + 生产构建
+```
+
+## 数据（待 Tauri 后端落地）
 
 - 数据库文件：`~/Library/Application Support/pm/pm.db`
 - 自动备份：`~/Documents/pm-backups/`

@@ -12,6 +12,7 @@ dist-ssr/
 # Build
 build/
 out/
+*.tsbuildinfo
 
 # Editor
 .vscode/*
