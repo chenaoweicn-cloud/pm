@@ -36,6 +36,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Worktrees
+.worktrees/
+
 # Local DB & backups (should never be committed)
 *.db
 *.db-journal
