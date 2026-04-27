@@ -2,6 +2,13 @@
 // mock dataset. When wired to the real backend, replace with a live date.
 export const TODAY = '2026-04-23'
 
+export function isoDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export function formatDate(iso?: string): string {
   if (!iso) return ''
   const [, m, d] = iso.split('-')
