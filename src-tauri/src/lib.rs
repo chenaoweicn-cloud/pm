@@ -20,7 +20,17 @@ pub fn run() {
       }
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![commands::ping])
+    .invoke_handler(tauri::generate_handler![
+      commands::ping,
+      commands::projects::create_project,
+      commands::projects::list_active_projects,
+      commands::projects::list_archived_projects,
+      commands::projects::get_project,
+      commands::projects::update_project,
+      commands::projects::archive_project,
+      commands::projects::unarchive_project,
+      commands::projects::soft_delete_project,
+    ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

@@ -1,3 +1,5 @@
+pub mod projects;
+
 use tauri::State;
 use crate::db::DbState;
 use crate::error::AppResult;
