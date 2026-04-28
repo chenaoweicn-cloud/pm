@@ -1,6 +1,7 @@
 pub mod project_relations;
 pub mod projects;
 pub mod task_groups;
+pub mod tasks;
 
 use tauri::State;
 use crate::db::DbState;

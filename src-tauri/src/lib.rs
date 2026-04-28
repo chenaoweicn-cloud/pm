@@ -37,6 +37,16 @@ pub fn run() {
       commands::task_groups::list_task_groups,
       commands::task_groups::rename_task_group,
       commands::task_groups::delete_task_group,
+      commands::tasks::create_task,
+      commands::tasks::get_task,
+      commands::tasks::list_tasks_for_project,
+      commands::tasks::list_all_active_tasks,
+      commands::tasks::update_task,
+      commands::tasks::set_task_status,
+      commands::tasks::soft_delete_task,
+      commands::tasks::today_tasks,
+      commands::tasks::completed_tasks_in_range,
+      commands::tasks::in_progress_tasks,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
