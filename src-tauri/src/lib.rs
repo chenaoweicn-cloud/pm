@@ -33,6 +33,10 @@ pub fn run() {
       commands::project_relations::create_project_relation,
       commands::project_relations::list_project_relations,
       commands::project_relations::delete_project_relation,
+      commands::task_groups::create_task_group,
+      commands::task_groups::list_task_groups,
+      commands::task_groups::rename_task_group,
+      commands::task_groups::delete_task_group,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

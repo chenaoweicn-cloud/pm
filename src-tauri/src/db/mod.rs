@@ -1,6 +1,7 @@
 pub mod migrations;
 pub mod project_relations;
 pub mod projects;
+pub mod task_groups;
 
 use rusqlite::Connection;
 use std::path::PathBuf;
