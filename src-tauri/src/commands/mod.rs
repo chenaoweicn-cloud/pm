@@ -1,5 +1,6 @@
 pub mod attachments;
 pub mod project_relations;
+pub mod search;
 pub mod projects;
 pub mod tags;
 pub mod task_groups;

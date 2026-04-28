@@ -55,6 +55,7 @@ pub fn run() {
       commands::attachments::create_attachment,
       commands::attachments::list_attachments,
       commands::attachments::delete_attachment,
+      commands::search::search_all,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

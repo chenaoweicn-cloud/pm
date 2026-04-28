@@ -15,7 +15,7 @@ pub struct TaskInput {
     pub description: Option<String>,
 }
 
-fn row_to_task(row: &rusqlite::Row) -> rusqlite::Result<Task> {
+pub(crate) fn row_to_task(row: &rusqlite::Row) -> rusqlite::Result<Task> {
     Ok(Task {
         id: row.get("id")?,
         project_id: row.get("project_id")?,

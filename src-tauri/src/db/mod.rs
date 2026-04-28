@@ -1,5 +1,6 @@
 pub mod attachments;
 pub mod migrations;
+pub mod search;
 pub mod project_relations;
 pub mod projects;
 pub mod tags;

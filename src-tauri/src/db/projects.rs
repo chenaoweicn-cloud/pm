@@ -2,7 +2,7 @@ use rusqlite::{params, Connection};
 use crate::error::AppResult;
 use crate::models::Project;
 
-fn row_to_project(row: &rusqlite::Row) -> rusqlite::Result<Project> {
+pub(crate) fn row_to_project(row: &rusqlite::Row) -> rusqlite::Result<Project> {
     Ok(Project {
         id: row.get("id")?,
         name: row.get("name")?,
