@@ -26,3 +26,4 @@ tauri-plugin-log = "2"
 thiserror = "2"
 rusqlite = { version = "0.31", features = ["bundled"] }
 directories = "5"
+chrono = { version = "0.4", features = ["clock"] }

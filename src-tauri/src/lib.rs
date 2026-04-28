@@ -18,6 +18,27 @@ pub fn run() {
             .build(),
         )?;
       }
+      // trigger a backup on launch if last backup is >24h old
+      tauri::async_runtime::spawn(async move {
+        let dir = commands::backup::default_backup_dir_public();
+        let should_backup = match std::fs::read_dir(&dir) {
+          Ok(rd) => {
+            let newest = rd
+              .filter_map(|e| e.ok())
+              .filter_map(|e| e.metadata().ok())
+              .filter_map(|m| m.modified().ok())
+              .max();
+            match newest {
+              Some(t) => t.elapsed().map(|d| d.as_secs() > 24 * 3600).unwrap_or(true),
+              None => true,
+            }
+          }
+          Err(_) => true,
+        };
+        if should_backup {
+          let _ = commands::backup::perform_backup(&dir);
+        }
+      });
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![
@@ -61,6 +82,8 @@ pub fn run() {
       commands::trash::restore_task,
       commands::trash::purge_project,
       commands::trash::purge_task,
+      commands::backup::backup_now,
+      commands::backup::get_default_backup_dir,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
