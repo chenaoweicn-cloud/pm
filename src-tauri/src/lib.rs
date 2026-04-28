@@ -9,6 +9,7 @@ pub fn run() {
   let conn = db::init_connection(&db_path).expect("db init failed");
 
   tauri::Builder::default()
+    .plugin(tauri_plugin_notification::init())
     .manage(db::DbState(std::sync::Mutex::new(conn)))
     .setup(|app| {
       if cfg!(debug_assertions) {
@@ -37,6 +38,15 @@ pub fn run() {
         };
         if should_backup {
           let _ = commands::backup::perform_backup(&dir);
+        }
+      });
+      // check due-date notifications on launch then every hour
+      let notify_handle = app.handle().clone();
+      tauri::async_runtime::spawn(async move {
+        let _ = commands::notifications::check_and_notify(&notify_handle);
+        loop {
+          tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+          let _ = commands::notifications::check_and_notify(&notify_handle);
         }
       });
       Ok(())
@@ -84,6 +94,9 @@ pub fn run() {
       commands::trash::purge_task,
       commands::backup::backup_now,
       commands::backup::get_default_backup_dir,
+      commands::export::export_json,
+      commands::export::export_markdown,
+      commands::notifications::check_notifications_now,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
