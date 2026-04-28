@@ -1,3 +1,4 @@
+pub mod attachments;
 pub mod migrations;
 pub mod project_relations;
 pub mod projects;
