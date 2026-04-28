@@ -30,6 +30,9 @@ pub fn run() {
       commands::projects::archive_project,
       commands::projects::unarchive_project,
       commands::projects::soft_delete_project,
+      commands::project_relations::create_project_relation,
+      commands::project_relations::list_project_relations,
+      commands::project_relations::delete_project_relation,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -1,4 +1,5 @@
 pub mod migrations;
+pub mod project_relations;
 pub mod projects;
 
 use rusqlite::Connection;

@@ -1,3 +1,4 @@
+pub mod project_relations;
 pub mod projects;
 
 use tauri::State;
