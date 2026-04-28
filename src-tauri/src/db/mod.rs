@@ -1,6 +1,7 @@
 pub mod migrations;
 pub mod project_relations;
 pub mod projects;
+pub mod tags;
 pub mod task_groups;
 pub mod tasks;
 
