@@ -6,6 +6,7 @@ pub mod projects;
 pub mod tags;
 pub mod task_groups;
 pub mod tasks;
+pub mod trash;
 
 use rusqlite::Connection;
 use std::path::PathBuf;

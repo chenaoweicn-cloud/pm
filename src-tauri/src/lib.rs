@@ -56,6 +56,11 @@ pub fn run() {
       commands::attachments::list_attachments,
       commands::attachments::delete_attachment,
       commands::search::search_all,
+      commands::trash::list_trash,
+      commands::trash::restore_project,
+      commands::trash::restore_task,
+      commands::trash::purge_project,
+      commands::trash::purge_task,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
