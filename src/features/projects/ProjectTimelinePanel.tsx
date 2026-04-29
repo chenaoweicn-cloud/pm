@@ -145,7 +145,7 @@ export function ProjectTimelinePanel({ project, tasks }: Props) {
                     color: done ? project.color : '#fff',
                   }}
                 >
-                  {relDate(t.dueDate)}
+                  {relDate(t.dueDate ?? undefined)}
                 </div>
               )}
             </div>

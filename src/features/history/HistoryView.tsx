@@ -142,7 +142,7 @@ export function HistoryView() {
             if (!p) return null
             return (
               <GroupCard key={pid}>
-                <GroupHeader color={p.color} title={p.name} type={p.type} count={list.length} />
+                <GroupHeader color={p.color} title={p.name} type={p.type ?? undefined} count={list.length} />
                 {list.map(t => (
                   <Row key={t.id} task={t} />
                 ))}
