@@ -95,7 +95,7 @@ export function ProjectTimelinePanel({ project, tasks }: Props) {
                 textDecoration: done ? 'line-through' : 'none',
               }}
             >
-              <Checkbox status={t.status} color={project.color} />
+              <Checkbox status={t.status} color={project.color ?? '#6C6C6C'} />
               <span
                 style={{
                   whiteSpace: 'nowrap',

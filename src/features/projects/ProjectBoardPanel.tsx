@@ -53,7 +53,7 @@ export function ProjectBoardPanel({ project, tasks }: Props) {
                       marginBottom: 4,
                     }}
                   >
-                    <Checkbox status={t.status} color={project.color} />
+                    <Checkbox status={t.status} color={project.color ?? '#6C6C6C'} />
                     {t.priority === 'high' && (
                       <span style={{ width: 3, height: 11, borderRadius: 1.5, background: S.warn }} />
                     )}

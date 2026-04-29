@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import type {
   Project, Task, TaskGroup, Tag, TaskAttachment, ProjectRelation,
   TaskInputDto, SearchResults, TrashItems,
+  TaskStatus, RelationType, AttachmentType,
 } from './types'
 
 // Projects
@@ -18,7 +19,7 @@ export const unarchiveProject = (id: number) => invoke<void>('unarchive_project'
 export const softDeleteProject = (id: number) => invoke<void>('soft_delete_project', { id })
 
 // Project Relations
-export const createProjectRelation = (args: { fromId: number; toId: number; relationType: string; note?: string | null }) =>
+export const createProjectRelation = (args: { fromId: number; toId: number; relationType: RelationType; note?: string | null }) =>
   invoke<ProjectRelation>('create_project_relation', args)
 export const listProjectRelations = (projectId: number) =>
   invoke<ProjectRelation[]>('list_project_relations', { projectId })
@@ -37,7 +38,7 @@ export const getTask = (id: number) => invoke<Task>('get_task', { id })
 export const listTasksForProject = (projectId: number) => invoke<Task[]>('list_tasks_for_project', { projectId })
 export const listAllActiveTasks = () => invoke<Task[]>('list_all_active_tasks')
 export const updateTask = (id: number, input: TaskInputDto) => invoke<Task>('update_task', { id, input })
-export const setTaskStatus = (id: number, status: string) => invoke<Task>('set_task_status', { id, status })
+export const setTaskStatus = (id: number, status: TaskStatus) => invoke<Task>('set_task_status', { id, status })
 export const softDeleteTask = (id: number) => invoke<void>('soft_delete_task', { id })
 export const todayTasks = (today: string) => invoke<Task[]>('today_tasks', { today })
 export const completedTasksInRange = (args: { start: string; endExclusive: string; includeArchived: boolean }) =>
@@ -53,7 +54,7 @@ export const attachTag = (taskId: number, tagId: number) => invoke<void>('attach
 export const detachTag = (taskId: number, tagId: number) => invoke<void>('detach_tag', { taskId, tagId })
 
 // Attachments
-export const createAttachment = (args: { taskId: number; type: string; urlOrPath: string; label?: string | null }) =>
+export const createAttachment = (args: { taskId: number; type: AttachmentType; urlOrPath: string; label?: string | null }) =>
   invoke<TaskAttachment>('create_attachment', args)
 export const listAttachments = (taskId: number) => invoke<TaskAttachment[]>('list_attachments', { taskId })
 export const deleteAttachment = (id: number) => invoke<void>('delete_attachment', { id })

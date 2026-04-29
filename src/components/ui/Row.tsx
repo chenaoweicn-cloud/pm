@@ -27,7 +27,7 @@ export function Row({ task, showDate = true }: Props) {
         borderTop: S.rowBorder,
       }}
     >
-      <Checkbox status={task.status} color={p.color} />
+      <Checkbox status={task.status} color={p.color ?? '#6C6C6C'} />
       {task.priority === 'high' && (
         <span style={{ width: 3, height: 12, borderRadius: 1.5, background: S.warn, flexShrink: 0 }} />
       )}

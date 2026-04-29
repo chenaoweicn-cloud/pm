@@ -132,7 +132,7 @@ export function GlobalSearch({ onClose }: Props) {
                   background: sel ? S.accentSoft : 'transparent',
                 }}
               >
-                <Checkbox status={t.status} color={p.color} />
+                <Checkbox status={t.status} color={p.color ?? '#6C6C6C'} />
                 <span
                   style={{
                     flex: 1,

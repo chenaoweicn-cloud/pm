@@ -19,7 +19,7 @@ export interface Project {
   createdAt: string
   updatedAt: string
   // UI-derived (not in DB schema; computed from joins/queries in real impl)
-  color: string
+  color?: string
   taskCount?: number
   dueCount?: number
 }
