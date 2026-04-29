@@ -65,7 +65,7 @@ export function TrashView() {
           {projects.length > 0 && (
             <div
               style={{
-                background: '#FFFFFF',
+                background: S.cardBg,
                 borderRadius: S.cardRadius,
                 border: S.cardBorder,
                 boxShadow: S.cardShadow,
@@ -140,7 +140,7 @@ export function TrashView() {
           {tasks.length > 0 && (
             <div
               style={{
-                background: '#FFFFFF',
+                background: S.cardBg,
                 borderRadius: S.cardRadius,
                 border: S.cardBorder,
                 boxShadow: S.cardShadow,
