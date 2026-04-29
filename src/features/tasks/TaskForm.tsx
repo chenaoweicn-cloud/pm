@@ -20,14 +20,18 @@ export function TaskForm({ projectId, onClose }: Props) {
   const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
 
-  // Update selected project when projects load or projectId prop changes
+  // Only pre-select project on first initialization; never overwrite user's choice on refetch
+  const initializedRef = useRef(false)
   useEffect(() => {
+    if (initializedRef.current) return
     if (projectId != null) {
       setSelectedProjectId(projectId)
-    } else if (projects.length > 0 && selectedProjectId === 0) {
+      initializedRef.current = true
+    } else if (projects.length > 0) {
       setSelectedProjectId(projects[0].id)
+      initializedRef.current = true
     }
-  }, [projectId, projects]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId, projects])
 
   const nameRef = useRef<HTMLInputElement>(null)
 
@@ -48,6 +52,7 @@ export function TaskForm({ projectId, onClose }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (createTask.isPending) return
     if (!name.trim() || selectedProjectId === 0) return
 
     const input: TaskInputDto = {
@@ -231,6 +236,11 @@ export function TaskForm({ projectId, onClose }: Props) {
               {createTask.isPending ? '创建中…' : '创建任务'}
             </button>
           </div>
+          {createTask.isError && (
+            <p style={{ fontSize: 12, color: '#B8370F', marginTop: 4 }}>
+              创建失败，请重试
+            </p>
+          )}
         </form>
       </div>
     </div>
