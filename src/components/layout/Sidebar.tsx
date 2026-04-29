@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { S } from '@/design/tokens'
-import { useActiveProjects } from '@/features/projects/queries'
+import { useActiveProjects, useArchivedProjects, useUnarchiveProject } from '@/features/projects/queries'
 import { useAllActiveTasks, useTodayTasks } from '@/features/tasks/queries'
 import { todayIso } from '@/lib/date'
 import type { ViewKey } from './AppShell'
@@ -9,6 +10,7 @@ interface Props {
   projectId: number
   setView: (view: ViewKey, projectId?: number) => void
   openSearch: () => void
+  openProjectForm: () => void
 }
 
 interface NavItem {
@@ -18,11 +20,14 @@ interface NavItem {
   onClick?: () => void
 }
 
-export function Sidebar({ view, projectId, setView, openSearch }: Props) {
+export function Sidebar({ view, projectId, setView, openSearch, openProjectForm }: Props) {
   const today = todayIso()
   const { data: allTasks = [] } = useAllActiveTasks()
   const { data: todayTasksList = [] } = useTodayTasks(today)
   const { data: projects = [] } = useActiveProjects()
+  const { data: archivedProjects = [], isLoading: archivedLoading } = useArchivedProjects()
+  const unarchive = useUnarchiveProject()
+  const [showArchived, setShowArchived] = useState(false)
 
   const counts = {
     today: todayTasksList.length,
@@ -34,6 +39,7 @@ export function Sidebar({ view, projectId, setView, openSearch }: Props) {
     { key: 'cross', label: '跨项目任务', badge: counts.cross },
     { key: 'history', label: '历史回顾' },
     { key: 'search', label: '搜索…', onClick: openSearch },
+    { key: 'trash', label: '回收站' },
   ]
 
   return (
@@ -130,7 +136,121 @@ export function Sidebar({ view, projectId, setView, openSearch }: Props) {
         })}
       </div>
 
+      {/* 归档项目折叠区 */}
+      <div style={{ marginTop: 6 }}>
+        <div
+          onClick={() => setShowArchived(v => !v)}
+          style={{
+            ...S.sectionLabel,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            cursor: 'default',
+            userSelect: 'none',
+          }}
+        >
+          <span>{showArchived ? '▾' : '▸'}</span>
+          <span style={{ flex: 1 }}>归档项目</span>
+          {archivedProjects.length > 0 && (
+            <span
+              style={{
+                fontSize: 10,
+                background: S.accentSoft,
+                color: S.accent,
+                borderRadius: 4,
+                padding: '1px 5px',
+              }}
+            >
+              {archivedProjects.length}
+            </span>
+          )}
+        </div>
+        {showArchived && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap, marginTop: 2 }}>
+            {archivedLoading ? (
+              <div style={{ fontSize: 12, color: S.fgMuted, padding: '4px 14px', fontStyle: 'italic' }}>加载中…</div>
+            ) : archivedProjects.length === 0 ? (
+              <div style={{ fontSize: 12, color: S.fgMuted, padding: '4px 14px', fontStyle: 'italic' }}>无归档项目</div>
+            ) : (
+              archivedProjects.map(p => (
+                <div
+                  key={p.id}
+                  style={{
+                    ...S.navItem,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 9,
+                    color: S.fgMuted,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: p.color ?? '#6C6C6C',
+                      flexShrink: 0,
+                      opacity: 0.5,
+                    }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      fontSize: 13,
+                      color: S.fgMuted,
+                    }}
+                  >
+                    {p.name}
+                  </span>
+                  <button
+                    disabled={unarchive.isPending}
+                    onClick={e => {
+                      e.stopPropagation()
+                      unarchive.mutate(p.id)
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: S.hairline,
+                      borderRadius: 5,
+                      padding: '2px 7px',
+                      fontSize: 11,
+                      color: S.fgMuted,
+                      cursor: unarchive.isPending ? 'not-allowed' : 'pointer',
+                      opacity: unarchive.isPending ? 0.5 : 1,
+                      fontFamily: S.font,
+                      flexShrink: 0,
+                    }}
+                  >
+                    重启
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
       <div
+        onClick={() => setView('settings')}
+        style={{
+          ...S.navItem,
+          background: view === 'settings' ? S.navActiveBg : 'transparent',
+          color: view === 'settings' ? S.navActiveFg : S.fgMuted,
+          fontWeight: view === 'settings' ? 600 : 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: 2,
+        }}
+      >
+        ⚙ 设置
+      </div>
+
+      <div
+        onClick={openProjectForm}
         style={{
           padding: '10px 12px',
           display: 'flex',
@@ -140,6 +260,7 @@ export function Sidebar({ view, projectId, setView, openSearch }: Props) {
           color: S.fgMuted,
           borderTop: S.hairline,
           marginTop: 6,
+          cursor: 'default',
         }}
       >
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.4">
