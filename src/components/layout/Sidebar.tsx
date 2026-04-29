@@ -25,7 +25,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
   const { data: allTasks = [] } = useAllActiveTasks()
   const { data: todayTasksList = [] } = useTodayTasks(today)
   const { data: projects = [] } = useActiveProjects()
-  const { data: archivedProjects = [] } = useArchivedProjects()
+  const { data: archivedProjects = [], isLoading: archivedLoading } = useArchivedProjects()
   const unarchive = useUnarchiveProject()
   const [showArchived, setShowArchived] = useState(false)
 
@@ -166,17 +166,10 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
         </div>
         {showArchived && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap, marginTop: 2 }}>
-            {archivedProjects.length === 0 ? (
-              <div
-                style={{
-                  ...S.navItem,
-                  color: S.fgMuted,
-                  fontStyle: 'italic',
-                  fontSize: 12,
-                }}
-              >
-                无归档项目
-              </div>
+            {archivedLoading ? (
+              <div style={{ fontSize: 12, color: S.fgMuted, padding: '4px 14px', fontStyle: 'italic' }}>加载中…</div>
+            ) : archivedProjects.length === 0 ? (
+              <div style={{ fontSize: 12, color: S.fgMuted, padding: '4px 14px', fontStyle: 'italic' }}>无归档项目</div>
             ) : (
               archivedProjects.map(p => (
                 <div
@@ -212,6 +205,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
                     {p.name}
                   </span>
                   <button
+                    disabled={unarchive.isPending}
                     onClick={e => {
                       e.stopPropagation()
                       unarchive.mutate(p.id)
@@ -223,7 +217,8 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
                       padding: '2px 7px',
                       fontSize: 11,
                       color: S.fgMuted,
-                      cursor: 'pointer',
+                      cursor: unarchive.isPending ? 'not-allowed' : 'pointer',
+                      opacity: unarchive.isPending ? 0.5 : 1,
                       fontFamily: S.font,
                       flexShrink: 0,
                     }}

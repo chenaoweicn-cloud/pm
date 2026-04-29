@@ -237,7 +237,7 @@ export function TaskForm({ projectId, onClose }: Props) {
             </button>
           </div>
           {createTask.isError && (
-            <p style={{ fontSize: 12, color: '#B8370F', marginTop: 4 }}>
+            <p style={{ fontSize: 12, color: S.warn, marginTop: 4 }}>
               创建失败，请重试
             </p>
           )}
