@@ -4,7 +4,7 @@ import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { todayIso, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange } from '@/lib/date'
-import { useActiveProjects } from '@/features/projects/queries'
+import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
 import { useCompletedInRange, useInProgressTasks } from '@/features/tasks/queries'
 import type { Task } from '@/lib/types'
 
@@ -33,9 +33,11 @@ export function HistoryView() {
   const [range, setRange] = useState<Range>('week')
   const { start, endExclusive } = getRangeDates(range)
 
-  const { data: completedTasks = [] } = useCompletedInRange(start, endExclusive, false)
-  const { data: inflightTasks = [] } = useInProgressTasks(false)
-  const { data: projects = [] } = useActiveProjects()
+  const { data: completedTasks = [] } = useCompletedInRange(start, endExclusive, true)
+  const { data: inflightTasks = [] } = useInProgressTasks(true)
+  const { data: activeProjects = [] } = useActiveProjects()
+  const { data: archivedProjects = [] } = useArchivedProjects()
+  const projects = [...activeProjects, ...archivedProjects]
 
   const completed = [...completedTasks].sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
   const inflight = inflightTasks

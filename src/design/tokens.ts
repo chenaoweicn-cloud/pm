@@ -46,6 +46,7 @@ export interface DesignTokens {
   groupHeaderPad: string
   rowPad: string
   rowBorder: string
+  rowHover: string
   rowSize: number
   checkboxBorder: string
 }
@@ -109,6 +110,7 @@ export const STYLE_THINGS: DesignTokens = {
   groupHeaderPad: '14px 18px 8px',
   rowPad: '10px 18px',
   rowBorder: 'none',
+  rowHover: 'rgba(80,60,30,0.04)',
   rowSize: 13.5,
   checkboxBorder: '#C9C2B4',
 }

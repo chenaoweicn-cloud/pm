@@ -77,7 +77,7 @@ export function AppShell() {
     title = '设置'
     count = null
   } else {
-    body = <ProjectDetail projectId={projectId} />
+    body = <ProjectDetail projectId={projectId} onNavigateAway={() => setView('today')} />
     title = currentProject?.name ?? ''
     count = currentProject?.taskCount ?? null
   }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
-import { useProject } from '@/features/projects/queries'
+import { useProject, useArchiveProject, useSoftDeleteProject } from '@/features/projects/queries'
 import { useTasksForProject } from '@/features/tasks/queries'
 import { useTaskGroups } from '@/features/tasks/groupQueries'
 import { ProjectListPanel } from './ProjectListPanel'
@@ -18,13 +18,16 @@ const MODES: { key: Mode; label: string }[] = [
 
 interface Props {
   projectId: number
+  onNavigateAway?: () => void
 }
 
-export function ProjectDetail({ projectId }: Props) {
+export function ProjectDetail({ projectId, onNavigateAway }: Props) {
   const [mode, setMode] = useState<Mode>('list')
   const { data: p } = useProject(projectId)
   const { data: tasks = [] } = useTasksForProject(projectId)
   const { data: groups = [] } = useTaskGroups(projectId)
+  const archive = useArchiveProject()
+  const softDelete = useSoftDeleteProject()
 
   if (!p) return null
 
@@ -102,6 +105,42 @@ export function ProjectDetail({ projectId }: Props) {
           )}
           <div style={{ flex: 1 }} />
           {segmented}
+          <button
+            disabled={archive.isPending}
+            onClick={() => archive.mutate(projectId, { onSuccess: () => onNavigateAway?.() })}
+            style={{
+              background: 'none',
+              border: S.cardBorder,
+              borderRadius: S.inputRadius,
+              padding: '4px 10px',
+              fontSize: 12,
+              color: S.fgMuted,
+              cursor: 'pointer',
+              fontFamily: S.font,
+            }}
+          >
+            归档
+          </button>
+          <button
+            disabled={softDelete.isPending}
+            onClick={() => {
+              if (window.confirm('确定删除该项目？删除后可在回收站恢复。')) {
+                softDelete.mutate(projectId, { onSuccess: () => onNavigateAway?.() })
+              }
+            }}
+            style={{
+              background: 'none',
+              border: `1px solid ${S.warn}`,
+              borderRadius: S.inputRadius,
+              padding: '4px 10px',
+              fontSize: 12,
+              color: S.warn,
+              cursor: 'pointer',
+              fontFamily: S.font,
+            }}
+          >
+            删除
+          </button>
         </div>
       </div>
 

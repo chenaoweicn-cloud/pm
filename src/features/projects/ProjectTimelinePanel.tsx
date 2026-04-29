@@ -1,7 +1,7 @@
 import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { GroupCard } from '@/components/ui/GroupCard'
-import { TODAY, relDate } from '@/lib/date'
+import { todayIso, relDate } from '@/lib/date'
 import type { Project, Task } from '@/lib/types'
 
 interface Props {
@@ -12,9 +12,17 @@ interface Props {
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 
 export function ProjectTimelinePanel({ project, tasks }: Props) {
+  const today = todayIso()
   const dated = tasks.filter(t => t.dueDate || t.startDate)
-  const start = '2026-04-18'
-  const end = '2026-05-02'
+  const allDates = dated.flatMap(t => [t.startDate, t.dueDate].filter(Boolean) as string[])
+  const minDate = allDates.length > 0 ? allDates.reduce((a, b) => (a < b ? a : b)) : today
+  const maxDate = allDates.length > 0 ? allDates.reduce((a, b) => (a > b ? a : b)) : today
+  const startD = new Date(minDate < today ? minDate : today)
+  startD.setDate(startD.getDate() - 3)
+  const endD = new Date(maxDate > today ? maxDate : today)
+  endD.setDate(endD.getDate() + 7)
+  const start = startD.toISOString().slice(0, 10)
+  const end = endD.toISOString().slice(0, 10)
   const days: string[] = []
   const cursor = new Date(start)
   const stop = new Date(end)
@@ -45,7 +53,7 @@ export function ProjectTimelinePanel({ project, tasks }: Props) {
           {days.map(day => {
             const dt = new Date(day)
             const we = dt.getDay() === 0 || dt.getDay() === 6
-            const td = day === TODAY
+            const td = day === today
             return (
               <div
                 key={day}
@@ -110,7 +118,7 @@ export function ProjectTimelinePanel({ project, tasks }: Props) {
               {days.map((day, di) => {
                 const dt = new Date(day)
                 const we = dt.getDay() === 0 || dt.getDay() === 6
-                const td = day === TODAY
+                const td = day === today
                 if (!we && !td) return null
                 return (
                   <div
