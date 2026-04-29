@@ -8,6 +8,7 @@ import { CrossView } from '@/features/tasks/CrossView'
 import { HistoryView } from '@/features/history/HistoryView'
 import { ProjectDetail } from '@/features/projects/ProjectDetail'
 import { GlobalSearch } from '@/features/search/GlobalSearch'
+import { TaskForm } from '@/features/tasks/TaskForm'
 import { Sidebar } from './Sidebar'
 import { Toolbar } from './Toolbar'
 
@@ -17,6 +18,8 @@ export function AppShell() {
   const [view, setViewRaw] = useState<ViewKey>('today')
   const [projectId, setProjectId] = useState<number>(1)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [taskFormOpen, setTaskFormOpen] = useState(false)
+  const [taskFormProjectId, setTaskFormProjectId] = useState<number | null>(null)
 
   const today = todayIso()
   const { data: allTasks = [] } = useAllActiveTasks()
@@ -26,6 +29,7 @@ export function AppShell() {
   const setView = (v: ViewKey, pid?: number) => {
     setViewRaw(v)
     if (pid != null) setProjectId(pid)
+    setTaskFormProjectId(v === 'project' ? (pid ?? projectId) : null)
   }
 
   useEffect(() => {
@@ -33,6 +37,10 @@ export function AppShell() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setSearchOpen(true)
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault()
+        setTaskFormOpen(true)
       }
       if (e.key === 'Escape') setSearchOpen(false)
     }
@@ -85,6 +93,7 @@ export function AppShell() {
         {body}
       </div>
       {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
+      {taskFormOpen && <TaskForm projectId={taskFormProjectId} onClose={() => setTaskFormOpen(false)} />}
     </div>
   )
 }
