@@ -4,14 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-**Frontend prototype shipped, backend not yet started.** The user took the deviation path off the original v1 plan: instead of running P1–P4 (Tauri + Rust + DB + placeholder UI) and then doing the design last, they built the **Things-style UI first against mock data**. So:
+**P3 (Query layer) complete; backend not yet started.** The Things-style UI is fully wired to TanStack Query hooks and `src/lib/api.ts`. So:
 
-- ✅ Vite + React 18 + TS frontend exists under `src/`, runs with `pnpm dev`, types pass with `pnpm build`.
-- ✅ The full Things 风格 design (4 views + ⌘K search) is implemented from the design bundle at `https://api.anthropic.com/v1/design/h/znLI5njQuSAFrPPs_BCDPg`.
-- ❌ No `src-tauri/`, no Rust, no SQLite. Data is mocked from `src/lib/mockData.ts`.
-- ❌ Tailwind / shadcn / TanStack Query / React Router are **not** installed — the design uses inline styles driven by tokens, and the prototype is single-state.
+- ✅ Vite + React 18 + TS frontend under `src/`, runs with `pnpm dev`, types pass with `pnpm build`.
+- ✅ The full Things 风格 design (4 views + ⌘K search) is implemented.
+- ✅ TanStack Query v5 installed; all views use Query hooks. `src/lib/mockData.ts` is deleted.
+- ✅ `src/lib/api.ts` — 42 Tauri IPC wrappers ready; `src/lib/types.ts` aligned with spec §6.1.
+- ✅ `src/lib/queryClient.ts` — `QueryClient` configured (staleTime 5 s, no window-focus refetch).
+- ❌ No `src-tauri/`, no Rust, no SQLite. `api.ts` calls `invoke` but there is no Tauri process — the app currently renders empty/loading states (no data) until the backend lands.
+- ❌ Tailwind / shadcn / React Router are not installed — inline styles via tokens, AppShell-based routing.
 
-When the backend lands later, the swap target is `src/lib/mockData.ts` → `src/lib/api.ts` (Tauri invoke wrapper from plan task 24). The view components were written to consume typed `Project`/`Task` data, so they shouldn't need rewrites — only the data source.
+When the backend lands, `src/lib/api.ts` is the only file that needs updating — it already has all 42 command wrappers with correct types. Views and hooks are backend-ready.
 
 ## Authoritative documents
 
@@ -28,8 +31,9 @@ src/
 │   └── tokens.ts                  # STYLE_THINGS — colors, sizes, spacing as a typed object
 ├── lib/
 │   ├── types.ts                   # Project, Task, TaskGroup etc. — aligned with spec §6.1 schema
-│   ├── mockData.ts                # PROJECTS, TASKS, TASK_GROUPS + helpers (todayTasks, projectById…)
-│   └── date.ts                    # TODAY (frozen), formatDate, relDate
+│   ├── api.ts                     # 42 Tauri invoke wrappers — sole file that calls invoke
+│   ├── queryClient.ts             # shared QueryClient instance
+│   └── date.ts                    # todayIso(), formatDate, relDate, thisWeekRange, thisMonthRange
 ├── components/
 │   ├── ui/                        # primitives — Stat, Checkbox, Row, GroupCard
 │   └── layout/                    # AppShell (view router + ⌘K), Sidebar, Toolbar
@@ -44,16 +48,18 @@ src/
 ### Load-bearing rules for the frontend
 
 - **All visual styling reads from `src/design/tokens.ts` (`S` export).** Do not hardcode colors, paddings, or radii in components — extend the tokens module instead. This keeps the door open for a Sequoia/Linear/dark variant.
-- **Components consume typed data from `lib/types.ts`.** Never widen to `any`. Mock data conforms to the same types so the eventual API swap is type-safe.
+- **Components consume typed data from `lib/types.ts`.** Never widen to `any`.
 - **`AppShell` owns view + projectId state and the ⌘K listener.** Features don't manage their own routing.
-- **`TODAY` is frozen at `2026-04-23`.** This is intentional — the mock dataset references that date so the UI renders deterministically. When real data arrives, replace `TODAY` with `new Date().toISOString().slice(0, 10)`.
+- **Use `todayIso()` (function) for date comparisons, not the `TODAY` export.** `todayIso()` calls `new Date()` on every invocation so it stays correct across midnight. `TODAY` was removed from all components.
 - **No CSS frameworks installed.** Inline `style` props with token objects are the convention. Do not introduce Tailwind unless the user asks — it would force a rewrite of every component.
 
 ## Tech stack
 
 **Active:** Vite 5 · React 18 · TypeScript 5 (strict) · pnpm 10 (via corepack).
 
-**Planned (not yet installed):** Tauri 2 · Rust · `rusqlite` · TanStack Query · React Router · date-fns · Vitest · `tauri-plugin-notification` · `tauri-plugin-dialog`.
+**Also installed:** TanStack Query v5 · Vitest.
+
+**Planned (not yet installed):** Tauri 2 · Rust · `rusqlite` · React Router · date-fns · `tauri-plugin-notification` · `tauri-plugin-dialog`.
 
 ## Commands
 
