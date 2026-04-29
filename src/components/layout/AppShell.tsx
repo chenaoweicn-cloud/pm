@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { S } from '@/design/tokens'
-import { TASKS, projectById, todayTasks } from '@/lib/mockData'
+import { useProject } from '@/features/projects/queries'
+import { useAllActiveTasks, useTodayTasks } from '@/features/tasks/queries'
+import { todayIso } from '@/lib/date'
 import { TodayView } from '@/features/today/TodayView'
 import { CrossView } from '@/features/tasks/CrossView'
 import { HistoryView } from '@/features/history/HistoryView'
@@ -15,6 +17,11 @@ export function AppShell() {
   const [view, setViewRaw] = useState<ViewKey>('today')
   const [projectId, setProjectId] = useState<number>(1)
   const [searchOpen, setSearchOpen] = useState(false)
+
+  const today = todayIso()
+  const { data: allTasks = [] } = useAllActiveTasks()
+  const { data: todayTasksList = [] } = useTodayTasks(today)
+  const { data: currentProject } = useProject(view === 'project' ? projectId : null)
 
   const setView = (v: ViewKey, pid?: number) => {
     setViewRaw(v)
@@ -40,20 +47,19 @@ export function AppShell() {
   if (view === 'today') {
     body = <TodayView />
     title = '今日待办'
-    count = todayTasks().length
+    count = todayTasksList.length
   } else if (view === 'cross') {
     body = <CrossView />
     title = '跨项目任务'
-    count = TASKS.filter(t => t.status !== 'done').length
+    count = allTasks.filter(t => t.status !== 'done').length
   } else if (view === 'history') {
     body = <HistoryView />
     title = '历史回顾'
     count = null
   } else {
-    const p = projectById(projectId)
     body = <ProjectDetail projectId={projectId} />
-    title = p?.name ?? ''
-    count = p?.taskCount ?? null
+    title = currentProject?.name ?? ''
+    count = currentProject?.taskCount ?? null
   }
 
   return (

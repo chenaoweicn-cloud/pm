@@ -2,18 +2,26 @@ import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
-import { TODAY } from '@/lib/date'
-import { projectById, todayTasks } from '@/lib/mockData'
+import { todayIso, formatDate } from '@/lib/date'
+import { useActiveProjects } from '@/features/projects/queries'
+import { useTodayTasks } from '@/features/tasks/queries'
 import type { Task } from '@/lib/types'
 
 export function TodayView() {
-  const ts = todayTasks()
+  const today = todayIso()
+  const { data: ts = [] } = useTodayTasks(today)
+  const { data: projects = [] } = useActiveProjects()
+
   const byProject = new Map<number, Task[]>()
   for (const t of ts) {
     const list = byProject.get(t.projectId) ?? []
     list.push(t)
     byProject.set(t.projectId, list)
   }
+
+  const now = new Date()
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  const dayLabel = `${days[now.getDay()]} · ${formatDate(today)}`
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
@@ -27,7 +35,7 @@ export function TodayView() {
             textTransform: 'uppercase',
           }}
         >
-          周四 · 4月23日
+          {dayLabel}
         </div>
         <div
           style={{
@@ -49,14 +57,14 @@ export function TodayView() {
           />
           <Stat
             label="今日到期"
-            value={ts.filter(t => t.dueDate === TODAY).length}
+            value={ts.filter(t => t.dueDate === today).length}
             tone="warn"
           />
         </div>
       </div>
 
       {[...byProject.entries()].map(([pid, list]) => {
-        const p = projectById(pid)
+        const p = projects.find(x => x.id === pid)
         if (!p) return null
         return (
           <GroupCard key={pid}>

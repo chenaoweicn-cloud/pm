@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
-import { TASK_GROUPS, projectById, tasksForProject } from '@/lib/mockData'
+import { useProject } from '@/features/projects/queries'
+import { useTasksForProject } from '@/features/tasks/queries'
+import { useTaskGroups } from '@/features/tasks/groupQueries'
 import { ProjectListPanel } from './ProjectListPanel'
 import { ProjectBoardPanel } from './ProjectBoardPanel'
 import { ProjectTimelinePanel } from './ProjectTimelinePanel'
@@ -20,9 +22,9 @@ interface Props {
 
 export function ProjectDetail({ projectId }: Props) {
   const [mode, setMode] = useState<Mode>('list')
-  const p = projectById(projectId)
-  const tasks = tasksForProject(projectId)
-  const groups = TASK_GROUPS[projectId] ?? []
+  const { data: p } = useProject(projectId)
+  const { data: tasks = [] } = useTasksForProject(projectId)
+  const { data: groups = [] } = useTaskGroups(projectId)
 
   if (!p) return null
 

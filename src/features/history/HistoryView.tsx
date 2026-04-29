@@ -3,8 +3,9 @@ import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
-import { TODAY, formatDate, relDate } from '@/lib/date'
-import { TASKS, projectById } from '@/lib/mockData'
+import { TODAY, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange } from '@/lib/date'
+import { useActiveProjects } from '@/features/projects/queries'
+import { useCompletedInRange, useInProgressTasks } from '@/features/tasks/queries'
 import type { Task } from '@/lib/types'
 
 type Range = 'week' | 'month' | 'quarter' | 'custom'
@@ -16,17 +17,28 @@ const SEG: { key: Range; label: string }[] = [
   { key: 'custom', label: '自定义' },
 ]
 
+function getRangeDates(range: Range): { start: string; endExclusive: string } {
+  if (range === 'month') return thisMonthRange()
+  if (range === 'quarter') {
+    const now = new Date()
+    const q = Math.floor(now.getMonth() / 3)
+    const start = new Date(now.getFullYear(), q * 3, 1)
+    const end = new Date(now.getFullYear(), q * 3 + 3, 1)
+    return { start: isoDate(start), endExclusive: isoDate(end) }
+  }
+  return thisWeekRange() // week + custom both default to week
+}
+
 export function HistoryView() {
   const [range, setRange] = useState<Range>('week')
-  // V1 displays the prototype's hardcoded current week; real impl will compute from `range`.
-  const ws = '2026-04-20'
-  const we = '2026-04-26'
+  const { start, endExclusive } = getRangeDates(range)
 
-  const completed = TASKS.filter(
-    t => t.status === 'done' && t.completedAt && t.completedAt >= ws && t.completedAt <= we,
-  ).sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
+  const { data: completedTasks = [] } = useCompletedInRange(start, endExclusive, false)
+  const { data: inflightTasks = [] } = useInProgressTasks(false)
+  const { data: projects = [] } = useActiveProjects()
 
-  const inflight = TASKS.filter(t => t.status === 'in_progress')
+  const completed = [...completedTasks].sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
+  const inflight = inflightTasks
 
   const byDate: Record<string, Task[]> = {}
   for (const t of completed) {
@@ -37,6 +49,8 @@ export function HistoryView() {
   for (const t of inflight) {
     ;(byProj[t.projectId] ??= []).push(t)
   }
+
+  const rangeLabel = `${formatDate(start)} — ${formatDate(endExclusive)}`
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
@@ -50,7 +64,7 @@ export function HistoryView() {
             textTransform: 'uppercase',
           }}
         >
-          4月20日 — 4月26日 · 第 17 周
+          {rangeLabel}
         </div>
         <div
           style={{
@@ -138,7 +152,7 @@ export function HistoryView() {
 
         <div>
           {Object.entries(byProj).map(([pid, list]) => {
-            const p = projectById(parseInt(pid, 10))
+            const p = projects.find(x => x.id === parseInt(pid, 10))
             if (!p) return null
             return (
               <GroupCard key={pid}>
