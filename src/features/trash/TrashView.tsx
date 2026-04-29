@@ -12,6 +12,9 @@ export function TrashView() {
   const tasks = data?.tasks ?? []
   const isEmpty = projects.length === 0 && tasks.length === 0
 
+  const projectsAnyPending = restoreProject.isPending || purgeProject.isPending
+  const tasksAnyPending = restoreTask.isPending || purgeTask.isPending
+
   if (isLoading) {
     return (
       <div
@@ -73,9 +76,7 @@ export function TrashView() {
               }}
             >
               <div style={{ ...S.sectionLabel, paddingTop: 12, paddingBottom: 8 }}>项目</div>
-              {projects.map(p => {
-                const anyPending = restoreProject.isPending || purgeProject.isPending
-                return (
+              {projects.map(p => (
                   <div
                     key={p.id}
                     style={{
@@ -91,7 +92,7 @@ export function TrashView() {
                       {p.deletedAt ?? ''}
                     </span>
                     <button
-                      disabled={anyPending}
+                      disabled={projectsAnyPending}
                       onClick={() => restoreProject.mutate(p.id)}
                       style={{
                         border: S.hairline,
@@ -100,8 +101,8 @@ export function TrashView() {
                         fontSize: 12,
                         background: 'transparent',
                         color: S.accent,
-                        cursor: anyPending ? 'not-allowed' : 'pointer',
-                        opacity: anyPending ? 0.5 : 1,
+                        cursor: projectsAnyPending ? 'not-allowed' : 'pointer',
+                        opacity: projectsAnyPending ? 0.5 : 1,
                         fontFamily: S.font,
                         flexShrink: 0,
                       }}
@@ -109,7 +110,7 @@ export function TrashView() {
                       恢复
                     </button>
                     <button
-                      disabled={anyPending}
+                      disabled={projectsAnyPending}
                       onClick={() => {
                         if (window.confirm('彻底删除？将无法恢复。')) {
                           purgeProject.mutate(p.id)
@@ -122,8 +123,8 @@ export function TrashView() {
                         fontSize: 12,
                         background: 'transparent',
                         color: S.warn,
-                        cursor: anyPending ? 'not-allowed' : 'pointer',
-                        opacity: anyPending ? 0.5 : 1,
+                        cursor: projectsAnyPending ? 'not-allowed' : 'pointer',
+                        opacity: projectsAnyPending ? 0.5 : 1,
                         fontFamily: S.font,
                         flexShrink: 0,
                       }}
@@ -131,8 +132,7 @@ export function TrashView() {
                       彻底删除
                     </button>
                   </div>
-                )
-              })}
+              ))}
             </div>
           )}
 
@@ -148,9 +148,7 @@ export function TrashView() {
               }}
             >
               <div style={{ ...S.sectionLabel, paddingTop: 12, paddingBottom: 8 }}>任务</div>
-              {tasks.map(t => {
-                const anyPending = restoreTask.isPending || purgeTask.isPending
-                return (
+              {tasks.map(t => (
                   <div
                     key={t.id}
                     style={{
@@ -166,7 +164,7 @@ export function TrashView() {
                       {t.deletedAt ?? ''}
                     </span>
                     <button
-                      disabled={anyPending}
+                      disabled={tasksAnyPending}
                       onClick={() => restoreTask.mutate(t.id)}
                       style={{
                         border: S.hairline,
@@ -175,8 +173,8 @@ export function TrashView() {
                         fontSize: 12,
                         background: 'transparent',
                         color: S.accent,
-                        cursor: anyPending ? 'not-allowed' : 'pointer',
-                        opacity: anyPending ? 0.5 : 1,
+                        cursor: tasksAnyPending ? 'not-allowed' : 'pointer',
+                        opacity: tasksAnyPending ? 0.5 : 1,
                         fontFamily: S.font,
                         flexShrink: 0,
                       }}
@@ -184,7 +182,7 @@ export function TrashView() {
                       恢复
                     </button>
                     <button
-                      disabled={anyPending}
+                      disabled={tasksAnyPending}
                       onClick={() => {
                         if (window.confirm('彻底删除？将无法恢复。')) {
                           purgeTask.mutate(t.id)
@@ -197,8 +195,8 @@ export function TrashView() {
                         fontSize: 12,
                         background: 'transparent',
                         color: S.warn,
-                        cursor: anyPending ? 'not-allowed' : 'pointer',
-                        opacity: anyPending ? 0.5 : 1,
+                        cursor: tasksAnyPending ? 'not-allowed' : 'pointer',
+                        opacity: tasksAnyPending ? 0.5 : 1,
                         fontFamily: S.font,
                         flexShrink: 0,
                       }}
@@ -206,8 +204,7 @@ export function TrashView() {
                       彻底删除
                     </button>
                   </div>
-                )
-              })}
+              ))}
             </div>
           )}
         </div>
