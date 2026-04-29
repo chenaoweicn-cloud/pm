@@ -234,6 +234,22 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
       </div>
 
       <div
+        onClick={() => setView('settings')}
+        style={{
+          ...S.navItem,
+          background: view === 'settings' ? S.navActiveBg : 'transparent',
+          color: view === 'settings' ? S.navActiveFg : S.fgMuted,
+          fontWeight: view === 'settings' ? 600 : 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: 2,
+        }}
+      >
+        ⚙ 设置
+      </div>
+
+      <div
         onClick={openProjectForm}
         style={{
           padding: '10px 12px',
