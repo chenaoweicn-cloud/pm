@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isoDate, formatDate, relDate, TODAY } from './date'
+import { isoDate, formatDate, relDate, TODAY, thisWeekRange, thisMonthRange, todayIso } from './date'
 
 describe('isoDate', () => {
   it('formats a date as YYYY-MM-DD', () => {
@@ -25,5 +25,20 @@ describe('relDate', () => {
   })
   it('returns 明天 for tomorrow', () => {
     expect(relDate('2026-04-24')).toBe('明天')
+  })
+})
+
+describe('week/month range', () => {
+  it('thisWeekRange: week range starts on Monday', () => {
+    const r = thisWeekRange()
+    expect(r.start <= r.endExclusive).toBe(true)
+    expect(new Date(r.start).getDay()).toBe(1)
+  })
+  it('thisMonthRange: month range starts on 1st', () => {
+    const r = thisMonthRange()
+    expect(r.start.endsWith('-01')).toBe(true)
+  })
+  it('todayIso returns YYYY-MM-DD', () => {
+    expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })
