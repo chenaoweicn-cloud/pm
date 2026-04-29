@@ -9,6 +9,7 @@ import { HistoryView } from '@/features/history/HistoryView'
 import { ProjectDetail } from '@/features/projects/ProjectDetail'
 import { GlobalSearch } from '@/features/search/GlobalSearch'
 import { TaskForm } from '@/features/tasks/TaskForm'
+import { ProjectForm } from '@/features/projects/ProjectForm'
 import { Sidebar } from './Sidebar'
 import { Toolbar } from './Toolbar'
 
@@ -20,6 +21,7 @@ export function AppShell() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [taskFormOpen, setTaskFormOpen] = useState(false)
   const [taskFormProjectId, setTaskFormProjectId] = useState<number | null>(null)
+  const [projectFormOpen, setProjectFormOpen] = useState(false)
 
   const today = todayIso()
   const { data: allTasks = [] } = useAllActiveTasks()
@@ -87,6 +89,7 @@ export function AppShell() {
         projectId={projectId}
         setView={setView}
         openSearch={() => setSearchOpen(true)}
+        openProjectForm={() => setProjectFormOpen(true)}
       />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <Toolbar title={title} count={count} openSearch={() => setSearchOpen(true)} />
@@ -94,6 +97,7 @@ export function AppShell() {
       </div>
       {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
       {taskFormOpen && <TaskForm projectId={taskFormProjectId} onClose={() => setTaskFormOpen(false)} />}
+      {projectFormOpen && <ProjectForm onClose={() => setProjectFormOpen(false)} />}
     </div>
   )
 }
