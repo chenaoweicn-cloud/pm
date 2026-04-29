@@ -39,6 +39,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
     { key: 'cross', label: '跨项目任务', badge: counts.cross },
     { key: 'history', label: '历史回顾' },
     { key: 'search', label: '搜索…', onClick: openSearch },
+    { key: 'trash', label: '回收站' },
   ]
 
   return (

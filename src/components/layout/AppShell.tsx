@@ -10,10 +10,11 @@ import { ProjectDetail } from '@/features/projects/ProjectDetail'
 import { GlobalSearch } from '@/features/search/GlobalSearch'
 import { TaskForm } from '@/features/tasks/TaskForm'
 import { ProjectForm } from '@/features/projects/ProjectForm'
+import { TrashView } from '@/features/trash/TrashView'
 import { Sidebar } from './Sidebar'
 import { Toolbar } from './Toolbar'
 
-export type ViewKey = 'today' | 'cross' | 'history' | 'project'
+export type ViewKey = 'today' | 'cross' | 'history' | 'project' | 'trash'
 
 export function AppShell() {
   const [view, setViewRaw] = useState<ViewKey>('today')
@@ -65,6 +66,10 @@ export function AppShell() {
   } else if (view === 'history') {
     body = <HistoryView />
     title = '历史回顾'
+    count = null
+  } else if (view === 'trash') {
+    body = <TrashView />
+    title = '回收站'
     count = null
   } else {
     body = <ProjectDetail projectId={projectId} />
