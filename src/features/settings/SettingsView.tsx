@@ -13,6 +13,25 @@ const sectionLabel: React.CSSProperties = {
   marginBottom: 8,
 }
 
+const labelStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: S.fgMuted,
+  marginBottom: 4,
+  display: 'block',
+}
+
+const inputStyle: React.CSSProperties = {
+  border: S.hairline,
+  borderRadius: S.inputRadius,
+  padding: '7px 10px',
+  fontSize: 13,
+  width: 400,
+  fontFamily: S.font,
+  background: S.bg,
+  color: S.fg,
+  outline: 'none',
+}
+
 export function SettingsView() {
   const [backupDir, setBackupDir] = useState<string>('')
   const [jsonPath, setJsonPath] = useState('~/Documents/pm-export.json')
@@ -32,7 +51,8 @@ export function SettingsView() {
     try {
       const result = await api.backupNow()
       setMsg('已备份到 ' + result)
-    } catch {
+    } catch (e) {
+      console.error(e)
       setErr('备份失败')
     } finally {
       setLoading(false)
@@ -46,7 +66,8 @@ export function SettingsView() {
     try {
       const result = await api.exportJson({ outputPath: jsonPath })
       setMsg('已导出到 ' + result)
-    } catch {
+    } catch (e) {
+      console.error(e)
       setErr('导出失败')
     } finally {
       setLoading(false)
@@ -61,23 +82,12 @@ export function SettingsView() {
       const { start, endExclusive } = thisMonthRange()
       const result = await api.exportMarkdown({ outputPath: mdPath, start, endExclusive })
       setMsg('已导出到 ' + result)
-    } catch {
+    } catch (e) {
+      console.error(e)
       setErr('导出失败')
     } finally {
       setLoading(false)
     }
-  }
-
-  const inputStyle: React.CSSProperties = {
-    border: S.hairline,
-    borderRadius: S.inputRadius,
-    padding: '7px 10px',
-    fontSize: 13,
-    width: 400,
-    fontFamily: S.font,
-    background: S.bg,
-    color: S.fg,
-    outline: 'none',
   }
 
   const btnStyle: React.CSSProperties = {
@@ -90,13 +100,6 @@ export function SettingsView() {
     cursor: loading ? 'not-allowed' : 'pointer',
     opacity: loading ? 0.6 : 1,
     fontFamily: S.font,
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: 12,
-    color: S.fgMuted,
-    marginBottom: 4,
-    display: 'block',
   }
 
   return (
@@ -122,9 +125,10 @@ export function SettingsView() {
 
         {/* 导出 JSON */}
         <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>输出路径</label>
+          <label htmlFor="json-path" style={labelStyle}>输出路径</label>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <input
+              id="json-path"
               style={inputStyle}
               value={jsonPath}
               onChange={e => setJsonPath(e.target.value)}
@@ -137,9 +141,10 @@ export function SettingsView() {
 
         {/* 导出本月 Markdown */}
         <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>输出路径</label>
+          <label htmlFor="md-path" style={labelStyle}>输出路径</label>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <input
+              id="md-path"
               style={inputStyle}
               value={mdPath}
               onChange={e => setMdPath(e.target.value)}
