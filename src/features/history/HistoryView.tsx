@@ -3,7 +3,7 @@ import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
-import { TODAY, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange } from '@/lib/date'
+import { todayIso, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange } from '@/lib/date'
 import { useActiveProjects } from '@/features/projects/queries'
 import { useCompletedInRange, useInProgressTasks } from '@/features/tasks/queries'
 import type { Task } from '@/lib/types'
@@ -42,7 +42,8 @@ export function HistoryView() {
 
   const byDate: Record<string, Task[]> = {}
   for (const t of completed) {
-    const k = t.completedAt!
+    const k = t.completedAt ?? ''
+    if (!k) continue
     ;(byDate[k] ??= []).push(t)
   }
   const byProj: Record<number, Task[]> = {}
@@ -137,7 +138,7 @@ export function HistoryView() {
                 >
                   <span>{formatDate(date)}</span>
                   <span style={{ fontWeight: 500 }}>
-                    · {date === TODAY ? '今天' : relDate(date)}
+                    · {date === todayIso() ? '今天' : relDate(date)}
                   </span>
                   <span style={{ marginLeft: 'auto', fontWeight: 500 }}>
                     {byDate[date].length} 项

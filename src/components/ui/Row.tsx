@@ -1,5 +1,5 @@
 import { S } from '@/design/tokens'
-import { TODAY, relDate } from '@/lib/date'
+import { todayIso, relDate } from '@/lib/date'
 import { useProject } from '@/features/projects/queries'
 import type { Task } from '@/lib/types'
 import { Checkbox } from './Checkbox'
@@ -12,8 +12,9 @@ interface Props {
 export function Row({ task, showDate = true }: Props) {
   const { data: p } = useProject(task.projectId)
   const isDone = task.status === 'done'
-  const overdue = task.dueDate != null && task.dueDate < TODAY && !isDone
-  const today = task.dueDate === TODAY
+  const todayStr = todayIso()
+  const overdue = task.dueDate != null && task.dueDate < todayStr && !isDone
+  const today = task.dueDate === todayStr
   const tag = task.tags?.[0]
 
   return (

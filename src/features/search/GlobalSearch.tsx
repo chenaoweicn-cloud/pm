@@ -103,7 +103,7 @@ export function GlobalSearch({ onClose }: Props) {
                     gap: 11,
                   }}
                 >
-                  <span style={{ width: 14, height: 14, borderRadius: 4, background: p.color }} />
+                  <span style={{ width: 14, height: 14, borderRadius: 4, background: p.color ?? '#6C6C6C' }} />
                   <span style={{ fontSize: 13, color: S.fg, fontWeight: 500 }}>{p.name}</span>
                   <span style={{ marginLeft: 'auto', fontSize: 11, color: S.fgMuted }}>
                     {p.taskCount} 任务
@@ -156,7 +156,7 @@ export function GlobalSearch({ onClose }: Props) {
                     color: S.fgMuted,
                   }}
                 >
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color }} />
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color ?? '#6C6C6C' }} />
                   {p.name.split('·')[0].trim()}
                 </span>
               </div>

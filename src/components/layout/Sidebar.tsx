@@ -108,7 +108,7 @@ export function Sidebar({ view, projectId, setView, openSearch }: Props) {
               }}
             >
               <span
-                style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: p.color ?? '#6C6C6C', flexShrink: 0 }}
               />
               <span
                 style={{

@@ -66,7 +66,7 @@ export function ProjectDetail({ projectId }: Props) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: S.contentPad, paddingBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color }} />
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? '#6C6C6C' }} />
           <span
             style={{
               fontSize: 10,
