@@ -1,5 +1,7 @@
 import { S } from '@/design/tokens'
-import { PROJECTS, TASKS, todayTasks } from '@/lib/mockData'
+import { useActiveProjects } from '@/features/projects/queries'
+import { useAllActiveTasks, useTodayTasks } from '@/features/tasks/queries'
+import { todayIso } from '@/lib/date'
 import type { ViewKey } from './AppShell'
 
 interface Props {
@@ -17,9 +19,14 @@ interface NavItem {
 }
 
 export function Sidebar({ view, projectId, setView, openSearch }: Props) {
+  const today = todayIso()
+  const { data: allTasks = [] } = useAllActiveTasks()
+  const { data: todayTasksList = [] } = useTodayTasks(today)
+  const { data: projects = [] } = useActiveProjects()
+
   const counts = {
-    today: todayTasks().length,
-    cross: TASKS.filter(t => t.status !== 'done').length,
+    today: todayTasksList.length,
+    cross: allTasks.filter(t => t.status !== 'done').length,
   }
 
   const navItems: NavItem[] = [
@@ -84,7 +91,7 @@ export function Sidebar({ view, projectId, setView, openSearch }: Props) {
 
       <div style={{ ...S.sectionLabel, marginTop: 14 }}>项目</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap, overflow: 'auto', flex: 1 }}>
-        {PROJECTS.map(p => {
+        {projects.map(p => {
           const sel = view === 'project' && projectId === p.id
           return (
             <div
@@ -101,7 +108,7 @@ export function Sidebar({ view, projectId, setView, openSearch }: Props) {
               }}
             >
               <span
-                style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: p.color ?? '#6C6C6C', flexShrink: 0 }}
               />
               <span
                 style={{

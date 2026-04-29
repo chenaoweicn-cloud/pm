@@ -20,11 +20,13 @@ describe('relDate', () => {
   it('returns 今天 for TODAY', () => {
     expect(relDate(TODAY)).toBe('今天')
   })
-  it('returns 昨天 for yesterday', () => {
-    expect(relDate('2026-04-22')).toBe('昨天')
+  it('yesterday', () => {
+    const d = new Date(); d.setDate(d.getDate() - 1)
+    expect(relDate(isoDate(d))).toBe('昨天')
   })
-  it('returns 明天 for tomorrow', () => {
-    expect(relDate('2026-04-24')).toBe('明天')
+  it('tomorrow', () => {
+    const d = new Date(); d.setDate(d.getDate() + 1)
+    expect(relDate(isoDate(d))).toBe('明天')
   })
 })
 

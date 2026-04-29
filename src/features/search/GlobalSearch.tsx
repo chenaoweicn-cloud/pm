@@ -1,19 +1,20 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
-import { PROJECTS, TASKS, projectById } from '@/lib/mockData'
+import { useSearch } from '@/features/search/queries'
+import { useActiveProjects } from '@/features/projects/queries'
 
 interface Props {
   onClose: () => void
 }
 
 export function GlobalSearch({ onClose }: Props) {
-  const [q, setQ] = useState('访谈')
+  const [q, setQ] = useState('')
+  const { data: results } = useSearch(q)
+  const { data: projects = [] } = useActiveProjects()
 
-  const matches = TASKS.filter(
-    t => t.name.includes(q) || (t.tags?.some(tg => tg.includes(q)) ?? false),
-  )
-  const matchProjects = PROJECTS.filter(p => p.name.includes(q))
+  const matches = results?.tasks ?? []
+  const matchProjects = results?.projects ?? []
 
   return (
     <div
@@ -102,7 +103,7 @@ export function GlobalSearch({ onClose }: Props) {
                     gap: 11,
                   }}
                 >
-                  <span style={{ width: 14, height: 14, borderRadius: 4, background: p.color }} />
+                  <span style={{ width: 14, height: 14, borderRadius: 4, background: p.color ?? '#6C6C6C' }} />
                   <span style={{ fontSize: 13, color: S.fg, fontWeight: 500 }}>{p.name}</span>
                   <span style={{ marginLeft: 'auto', fontSize: 11, color: S.fgMuted }}>
                     {p.taskCount} 任务
@@ -116,7 +117,7 @@ export function GlobalSearch({ onClose }: Props) {
             任务 · {matches.length}
           </div>
           {matches.slice(0, 6).map((t, i) => {
-            const p = projectById(t.projectId)
+            const p = projects.find(x => x.id === t.projectId)
             if (!p) return null
             const sel = i === 0 && matchProjects.length === 0
             return (
@@ -155,7 +156,7 @@ export function GlobalSearch({ onClose }: Props) {
                     color: S.fgMuted,
                   }}
                 >
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color }} />
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color ?? '#6C6C6C' }} />
                   {p.name.split('·')[0].trim()}
                 </span>
               </div>

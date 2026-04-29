@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
-import { TASK_GROUPS, projectById, tasksForProject } from '@/lib/mockData'
+import { useProject } from '@/features/projects/queries'
+import { useTasksForProject } from '@/features/tasks/queries'
+import { useTaskGroups } from '@/features/tasks/groupQueries'
 import { ProjectListPanel } from './ProjectListPanel'
 import { ProjectBoardPanel } from './ProjectBoardPanel'
 import { ProjectTimelinePanel } from './ProjectTimelinePanel'
@@ -20,9 +22,9 @@ interface Props {
 
 export function ProjectDetail({ projectId }: Props) {
   const [mode, setMode] = useState<Mode>('list')
-  const p = projectById(projectId)
-  const tasks = tasksForProject(projectId)
-  const groups = TASK_GROUPS[projectId] ?? []
+  const { data: p } = useProject(projectId)
+  const { data: tasks = [] } = useTasksForProject(projectId)
+  const { data: groups = [] } = useTaskGroups(projectId)
 
   if (!p) return null
 
@@ -64,7 +66,7 @@ export function ProjectDetail({ projectId }: Props) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: S.contentPad, paddingBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color }} />
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? '#6C6C6C' }} />
           <span
             style={{
               fontSize: 10,

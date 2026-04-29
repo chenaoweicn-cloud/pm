@@ -1,13 +1,11 @@
-// Frozen "today" so the prototype renders deterministically against the
-// mock dataset. When wired to the real backend, replace with a live date.
-export const TODAY = '2026-04-23'
-
 export function isoDate(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
+
+export const TODAY = isoDate(new Date())
 
 export function formatDate(iso?: string): string {
   if (!iso) return ''
@@ -17,15 +15,15 @@ export function formatDate(iso?: string): string {
 
 export function relDate(iso?: string): string {
   if (!iso) return ''
-  if (iso === TODAY) return '今天'
-  if (iso === '2026-04-22') return '昨天'
-  if (iso === '2026-04-24') return '明天'
-  if (iso < TODAY) {
-    const days = Math.round((+new Date(TODAY) - +new Date(iso)) / 86400000)
-    return `逾期 ${days} 天`
-  }
-  const days = Math.round((+new Date(iso) - +new Date(TODAY)) / 86400000)
-  return `${days} 天后`
+  const todayDate = new Date()
+  const todayStr = isoDate(todayDate)
+  if (iso === todayStr) return '今天'
+  const diffMs = +new Date(iso) - +new Date(todayStr)
+  const diffDays = Math.round(diffMs / 86400000)
+  if (diffDays === -1) return '昨天'
+  if (diffDays === 1) return '明天'
+  if (diffDays < 0) return `逾期 ${-diffDays} 天`
+  return `${diffDays} 天后`
 }
 
 export function todayIso(): string { return isoDate(new Date()) }

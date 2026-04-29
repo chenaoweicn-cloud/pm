@@ -1,10 +1,11 @@
 import { S } from '@/design/tokens'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { Row } from '@/components/ui/Row'
-import { TASKS } from '@/lib/mockData'
+import { useAllActiveTasks } from '@/features/tasks/queries'
 
 export function CrossView() {
-  const ts = TASKS.filter(t => t.status !== 'done').sort((a, b) =>
+  const { data: allTasks = [] } = useAllActiveTasks()
+  const ts = allTasks.filter(t => t.status !== 'done').sort((a, b) =>
     (a.dueDate ?? 'z').localeCompare(b.dueDate ?? 'z'),
   )
 
