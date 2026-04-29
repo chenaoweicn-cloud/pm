@@ -10,6 +10,7 @@ export interface DesignTokens {
   accentSoft: string
   warn: string
   warnSoft: string
+  success: string
   hairline: string
   chipBg: string
   chipBorder: string
@@ -59,6 +60,7 @@ export const STYLE_THINGS: DesignTokens = {
   accentSoft: 'rgba(201,98,45,0.10)',
   warn: '#B8730F',
   warnSoft: 'rgba(184,115,15,0.10)',
+  success: '#2D8A4E',
   hairline: '1px solid #EDE8E1',
   chipBg: '#F0EBE2',
   chipBorder: 'none',

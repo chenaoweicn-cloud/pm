@@ -153,7 +153,7 @@ export function SettingsView() {
 
       {/* 反馈提示 */}
       {msg && (
-        <div style={{ color: '#2D8A4E', fontSize: 12 }}>{msg}</div>
+        <div style={{ color: S.success, fontSize: 12 }}>{msg}</div>
       )}
       {err && (
         <div style={{ color: S.warn, fontSize: 12 }}>{err}</div>
