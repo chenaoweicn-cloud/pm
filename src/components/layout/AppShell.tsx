@@ -102,7 +102,29 @@ export function AppShell() {
         openProjectForm={() => setProjectFormOpen(true)}
       />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <Toolbar title={title} count={count} openSearch={() => setSearchOpen(true)} />
+        <Toolbar
+          title={title}
+          count={count}
+          openSearch={() => setSearchOpen(true)}
+          right={view === 'project' ? (
+            <button
+              onClick={() => setTaskFormOpen(true)}
+              style={{
+                background: S.accent,
+                color: '#fff',
+                border: 'none',
+                borderRadius: S.inputRadius,
+                padding: '5px 14px',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: S.font,
+              }}
+            >
+              ＋ 新建任务
+            </button>
+          ) : undefined}
+        />
         {body}
       </div>
       {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
