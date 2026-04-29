@@ -27,3 +27,20 @@ export function relDate(iso?: string): string {
   const days = Math.round((+new Date(iso) - +new Date(TODAY)) / 86400000)
   return `${days} 天后`
 }
+
+export function todayIso(): string { return isoDate(new Date()) }
+
+export function thisWeekRange(): { start: string; endExclusive: string } {
+  const now = new Date()
+  const day = now.getDay() || 7  // Sunday=7, week starts Monday
+  const start = new Date(now); start.setDate(now.getDate() - day + 1); start.setHours(0,0,0,0)
+  const end = new Date(start); end.setDate(start.getDate() + 7)
+  return { start: isoDate(start), endExclusive: isoDate(end) }
+}
+
+export function thisMonthRange(): { start: string; endExclusive: string } {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  return { start: isoDate(start), endExclusive: isoDate(end) }
+}
