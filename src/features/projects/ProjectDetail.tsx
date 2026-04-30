@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
-import { useProject, useArchiveProject, useSoftDeleteProject } from '@/features/projects/queries'
+import type { Task } from '@/lib/types'
+import { useProject } from '@/features/projects/queries'
 import { useTasksForProject } from '@/features/tasks/queries'
-import { useTaskGroups } from '@/features/tasks/groupQueries'
+import { TaskForm } from '@/features/tasks/TaskForm'
 import { ProjectListPanel } from './ProjectListPanel'
 import { ProjectBoardPanel } from './ProjectBoardPanel'
 import { ProjectTimelinePanel } from './ProjectTimelinePanel'
+import { ProjectForm } from './ProjectForm'
 
 type Mode = 'list' | 'board' | 'timeline'
 
@@ -18,16 +20,14 @@ const MODES: { key: Mode; label: string }[] = [
 
 interface Props {
   projectId: number
-  onNavigateAway?: () => void
 }
 
-export function ProjectDetail({ projectId, onNavigateAway }: Props) {
+export function ProjectDetail({ projectId }: Props) {
   const [mode, setMode] = useState<Mode>('list')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [editingProject, setEditingProject] = useState(false)
   const { data: p } = useProject(projectId)
   const { data: tasks = [] } = useTasksForProject(projectId)
-  const { data: groups = [] } = useTaskGroups(projectId)
-  const archive = useArchiveProject()
-  const softDelete = useSoftDeleteProject()
 
   if (!p) return null
 
@@ -104,13 +104,11 @@ export function ProjectDetail({ projectId, onNavigateAway }: Props) {
             <Stat label="即将到期" value={p.dueCount} tone="warn" />
           )}
           <div style={{ flex: 1 }} />
-          {segmented}
           <button
-            disabled={archive.isPending}
-            onClick={() => archive.mutate(projectId, { onSuccess: () => onNavigateAway?.() })}
+            onClick={() => setEditingProject(true)}
             style={{
-              background: 'none',
-              border: S.cardBorder,
+              background: 'transparent',
+              border: S.hairline,
               borderRadius: S.inputRadius,
               padding: '4px 10px',
               fontSize: 12,
@@ -119,36 +117,29 @@ export function ProjectDetail({ projectId, onNavigateAway }: Props) {
               fontFamily: S.font,
             }}
           >
-            归档
+            编辑项目
           </button>
-          <button
-            disabled={softDelete.isPending}
-            onClick={() => {
-              if (window.confirm('确定删除该项目？删除后可在回收站恢复。')) {
-                softDelete.mutate(projectId, { onSuccess: () => onNavigateAway?.() })
-              }
-            }}
-            style={{
-              background: 'none',
-              border: `1px solid ${S.warn}`,
-              borderRadius: S.inputRadius,
-              padding: '4px 10px',
-              fontSize: 12,
-              color: S.warn,
-              cursor: 'pointer',
-              fontFamily: S.font,
-            }}
-          >
-            删除
-          </button>
+          {segmented}
         </div>
       </div>
 
       <div style={{ flex: 1, overflow: 'auto', padding: '0 36px 36px' }}>
-        {mode === 'list' && <ProjectListPanel groups={groups} tasks={tasks} />}
-        {mode === 'board' && <ProjectBoardPanel project={p} tasks={tasks} />}
-        {mode === 'timeline' && <ProjectTimelinePanel project={p} tasks={tasks} />}
+        {mode === 'list' && <ProjectListPanel tasks={tasks} onEditTask={setEditingTask} />}
+        {mode === 'board' && <ProjectBoardPanel project={p} tasks={tasks} onEditTask={setEditingTask} />}
+        {mode === 'timeline' && <ProjectTimelinePanel project={p} tasks={tasks} onEditTask={setEditingTask} />}
       </div>
+      {editingTask && (
+        <TaskForm
+          initialTask={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
+      {editingProject && (
+        <ProjectForm
+          initialProject={p}
+          onClose={() => setEditingProject(false)}
+        />
+      )}
     </div>
   )
 }

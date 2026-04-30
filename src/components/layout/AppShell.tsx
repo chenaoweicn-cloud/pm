@@ -36,6 +36,11 @@ export function AppShell() {
     setTaskFormProjectId(v === 'project' ? (pid ?? projectId) : null)
   }
 
+  const openProjectFromSearch = (pid: number) => {
+    setView('project', pid)
+    setSearchOpen(false)
+  }
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -77,7 +82,7 @@ export function AppShell() {
     title = '设置'
     count = null
   } else {
-    body = <ProjectDetail projectId={projectId} onNavigateAway={() => setView('today')} />
+    body = <ProjectDetail projectId={projectId} />
     title = currentProject?.name ?? ''
     count = currentProject?.taskCount ?? null
   }
@@ -87,6 +92,8 @@ export function AppShell() {
       style={{
         width: '100%',
         height: '100%',
+        minHeight: 0,
+        minWidth: 0,
         display: 'flex',
         fontFamily: S.font,
         background: S.bg,
@@ -101,7 +108,7 @@ export function AppShell() {
         openSearch={() => setSearchOpen(true)}
         openProjectForm={() => setProjectFormOpen(true)}
       />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
         <Toolbar
           title={title}
           count={count}
@@ -125,9 +132,16 @@ export function AppShell() {
             </button>
           ) : undefined}
         />
-        {body}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+          {body}
+        </div>
       </div>
-      {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
+      {searchOpen && (
+        <GlobalSearch
+          onClose={() => setSearchOpen(false)}
+          onOpenProject={openProjectFromSearch}
+        />
+      )}
       {taskFormOpen && <TaskForm projectId={taskFormProjectId} onClose={() => setTaskFormOpen(false)} />}
       {projectFormOpen && <ProjectForm onClose={() => setProjectFormOpen(false)} />}
     </div>

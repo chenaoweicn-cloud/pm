@@ -15,7 +15,10 @@ export function useAttachTag() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ taskId, tagId }: { taskId: number; tagId: number }) => api.attachTag(taskId, tagId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: taskKeys.all }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+      qc.invalidateQueries({ queryKey: ['tags', 'task', variables.taskId] })
+    },
   })
 }
 
@@ -23,7 +26,10 @@ export function useDetachTag() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ taskId, tagId }: { taskId: number; tagId: number }) => api.detachTag(taskId, tagId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: taskKeys.all }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+      qc.invalidateQueries({ queryKey: ['tags', 'task', variables.taskId] })
+    },
   })
 }
 

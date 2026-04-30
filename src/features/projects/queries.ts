@@ -6,7 +6,6 @@ export const projectKeys = {
   active: () => [...projectKeys.all, 'active'] as const,
   archived: () => [...projectKeys.all, 'archived'] as const,
   detail: (id: number) => [...projectKeys.all, 'detail', id] as const,
-  relations: (id: number) => [...projectKeys.all, 'relations', id] as const,
 }
 
 export const useActiveProjects = () =>

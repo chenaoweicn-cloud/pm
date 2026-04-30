@@ -1,10 +1,16 @@
+import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { Row } from '@/components/ui/Row'
 import { useAllActiveTasks } from '@/features/tasks/queries'
+import { useActiveProjects } from '@/features/projects/queries'
+import type { Task } from '@/lib/types'
+import { TaskForm } from '@/features/tasks/TaskForm'
 
 export function CrossView() {
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const { data: allTasks = [] } = useAllActiveTasks()
+  const { data: projects = [] } = useActiveProjects()
   const ts = allTasks.filter(t => t.status !== 'done').sort((a, b) =>
     (a.dueDate ?? 'z').localeCompare(b.dueDate ?? 'z'),
   )
@@ -37,10 +43,26 @@ export function CrossView() {
       </div>
       <GroupCard>
         <GroupHeader title="按到期时间" count={ts.length} />
-        {ts.map(t => (
-          <Row key={t.id} task={t} />
-        ))}
+        {ts.map(t => {
+          const project = projects.find(item => item.id === t.projectId)
+          return (
+            <Row
+              key={t.id}
+              task={t}
+              showProject
+              projectName={project?.name}
+              projectColor={project?.color}
+              onEdit={setEditingTask}
+            />
+          )
+        })}
       </GroupCard>
+      {editingTask && (
+        <TaskForm
+          initialTask={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
     </div>
   )
 }

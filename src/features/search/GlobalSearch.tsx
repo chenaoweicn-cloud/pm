@@ -1,20 +1,85 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { useSearch } from '@/features/search/queries'
-import { useActiveProjects } from '@/features/projects/queries'
+import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
+import type { Project, Task } from '@/lib/types'
 
 interface Props {
   onClose: () => void
+  onOpenProject: (projectId: number) => void
 }
 
-export function GlobalSearch({ onClose }: Props) {
+type SearchItem =
+  | { kind: 'project'; key: string; projectId: number; project: Project }
+  | { kind: 'task'; key: string; projectId: number; task: Task }
+
+export function GlobalSearch({ onClose, onOpenProject }: Props) {
   const [q, setQ] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const { data: results } = useSearch(q)
-  const { data: projects = [] } = useActiveProjects()
+  const { data: activeProjects = [] } = useActiveProjects()
+  const { data: archivedProjects = [] } = useArchivedProjects()
 
   const matches = results?.tasks ?? []
   const matchProjects = results?.projects ?? []
+  const taskMatches = matches.slice(0, 6)
+  const allProjects = [...activeProjects, ...archivedProjects]
+
+  const items = useMemo<SearchItem[]>(
+    () => [
+      ...matchProjects.map(project => ({
+        kind: 'project' as const,
+        key: `project-${project.id}`,
+        projectId: project.id,
+        project,
+      })),
+      ...taskMatches.map(task => ({
+        kind: 'task' as const,
+        key: `task-${task.id}`,
+        projectId: task.projectId,
+        task,
+      })),
+    ],
+    [matchProjects, taskMatches],
+  )
+
+  useEffect(() => {
+    setSelectedIndex(current => {
+      if (items.length === 0) return 0
+      return Math.min(current, items.length - 1)
+    })
+  }, [items])
+
+  const openItem = (item: SearchItem | undefined) => {
+    if (!item) return
+    onOpenProject(item.projectId)
+  }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        if (items.length === 0) return
+        e.preventDefault()
+        setSelectedIndex(current => (current + 1) % items.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        if (items.length === 0) return
+        e.preventDefault()
+        setSelectedIndex(current => (current - 1 + items.length) % items.length)
+        return
+      }
+      if (e.key === 'Enter') {
+        if (items.length === 0) return
+        e.preventDefault()
+        openItem(items[selectedIndex])
+      }
+    }
+
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [items, onOpenProject, selectedIndex])
 
   return (
     <div
@@ -88,19 +153,37 @@ export function GlobalSearch({ onClose }: Props) {
         </div>
 
         <div style={{ flex: 1, overflow: 'auto', padding: '4px 0' }}>
+          {items.length === 0 && q.trim().length > 0 && (
+            <div
+              style={{
+                padding: '18px',
+                fontSize: 12,
+                color: S.fgMuted,
+                fontStyle: 'italic',
+              }}
+            >
+              没有找到匹配结果
+            </div>
+          )}
           {matchProjects.length > 0 && (
             <>
               <div style={{ ...S.sectionLabel, padding: '8px 18px 4px' }}>
                 项目 · {matchProjects.length}
               </div>
-              {matchProjects.map(p => (
+              {matchProjects.map((p, index) => {
+                const sel = selectedIndex === index
+                return (
                 <div
                   key={p.id}
+                  onClick={() => openItem(items[index])}
+                  onMouseEnter={() => setSelectedIndex(index)}
                   style={{
                     padding: '7px 18px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 11,
+                    background: sel ? S.accentSoft : 'transparent',
+                    cursor: 'pointer',
                   }}
                 >
                   <span style={{ width: 14, height: 14, borderRadius: 4, background: p.color ?? '#6C6C6C' }} />
@@ -109,20 +192,23 @@ export function GlobalSearch({ onClose }: Props) {
                     {p.taskCount} 任务
                   </span>
                 </div>
-              ))}
+                )
+              })}
             </>
           )}
 
           <div style={{ ...S.sectionLabel, padding: '8px 18px 4px' }}>
             任务 · {matches.length}
           </div>
-          {matches.slice(0, 6).map((t, i) => {
-            const p = projects.find(x => x.id === t.projectId)
-            if (!p) return null
-            const sel = i === 0 && matchProjects.length === 0
+          {taskMatches.map((t, i) => {
+            const absoluteIndex = matchProjects.length + i
+            const p = allProjects.find(x => x.id === t.projectId)
+            const sel = selectedIndex === absoluteIndex
             return (
               <div
                 key={t.id}
+                onClick={() => openItem(items[absoluteIndex])}
+                onMouseEnter={() => setSelectedIndex(absoluteIndex)}
                 style={{
                   margin: '0 8px',
                   padding: '7px 10px',
@@ -131,9 +217,10 @@ export function GlobalSearch({ onClose }: Props) {
                   alignItems: 'center',
                   gap: 10,
                   background: sel ? S.accentSoft : 'transparent',
+                  cursor: 'pointer',
                 }}
               >
-                <Checkbox status={t.status} color={p.color ?? '#6C6C6C'} />
+                <Checkbox status={t.status} color={p?.color ?? '#6C6C6C'} />
                 <span
                   style={{
                     flex: 1,
@@ -156,8 +243,8 @@ export function GlobalSearch({ onClose }: Props) {
                     color: S.fgMuted,
                   }}
                 >
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color ?? '#6C6C6C' }} />
-                  {p.name.split('·')[0].trim()}
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p?.color ?? '#6C6C6C' }} />
+                  {(p?.name ?? '未知项目').split('·')[0].trim()}
                 </span>
               </div>
             )

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/lib/api'
+import { taskKeys } from './queries'
 
 export const useTaskGroups = (projectId: number | null) =>
   useQuery({
@@ -12,7 +13,10 @@ export function useCreateTaskGroup() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: api.createTaskGroup,
-    onSuccess: (_data, variables) => qc.invalidateQueries({ queryKey: ['groups', variables.projectId] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['groups', variables.projectId] })
+      qc.invalidateQueries({ queryKey: taskKeys.byProject(variables.projectId) })
+    },
   })
 }
 
@@ -20,7 +24,10 @@ export function useRenameTaskGroup() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, name }: { id: number; name: string }) => api.renameTaskGroup(id, name),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['groups'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['groups'] })
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+    },
   })
 }
 
@@ -28,6 +35,9 @@ export function useDeleteTaskGroup() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: api.deleteTaskGroup,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['groups'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['groups'] })
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+    },
   })
 }

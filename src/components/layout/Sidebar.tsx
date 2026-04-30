@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
-import { useActiveProjects, useArchivedProjects, useUnarchiveProject } from '@/features/projects/queries'
+import {
+  useActiveProjects,
+  useArchivedProjects,
+  useArchiveProject,
+  useSoftDeleteProject,
+  useUnarchiveProject,
+} from '@/features/projects/queries'
 import { useAllActiveTasks, useTodayTasks } from '@/features/tasks/queries'
 import { todayIso } from '@/lib/date'
 import type { ViewKey } from './AppShell'
@@ -26,6 +32,8 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
   const { data: todayTasksList = [] } = useTodayTasks(today)
   const { data: projects = [] } = useActiveProjects()
   const { data: archivedProjects = [], isLoading: archivedLoading } = useArchivedProjects()
+  const archive = useArchiveProject()
+  const softDelete = useSoftDeleteProject()
   const unarchive = useUnarchiveProject()
   const [showArchived, setShowArchived] = useState(false)
 
@@ -42,6 +50,19 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
     { key: 'trash', label: '回收站' },
   ]
 
+  const itemActionStyle = (tone: 'default' | 'warn') => ({
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    fontSize: 11,
+    lineHeight: 1,
+    color: tone === 'warn' ? S.warn : S.fgMuted,
+    opacity: 0.7,
+    cursor: 'pointer',
+    fontFamily: S.font,
+    flexShrink: 0,
+  } as const)
+
   return (
     <div
       style={{
@@ -52,6 +73,8 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
         padding: S.sidebarPad,
         display: 'flex',
         flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'auto',
       }}
     >
       <div
@@ -131,6 +154,48 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
                   {p.dueCount}
                 </span>
               )}
+              <button
+                disabled={archive.isPending}
+                aria-label={`归档项目 ${p.name}`}
+                title="归档项目"
+                onClick={e => {
+                  e.stopPropagation()
+                  archive.mutate(p.id, {
+                    onSuccess: () => {
+                      if (sel) setView('today')
+                    },
+                  })
+                }}
+                style={{
+                  ...itemActionStyle('default'),
+                  opacity: archive.isPending ? 0.35 : 0.7,
+                  cursor: archive.isPending ? 'not-allowed' : 'pointer',
+                }}
+              >
+                归档
+              </button>
+              <button
+                disabled={softDelete.isPending}
+                aria-label={`删除项目 ${p.name}`}
+                title="删除项目"
+                onClick={e => {
+                  e.stopPropagation()
+                  if (window.confirm('确定删除该项目？删除后可在回收站恢复。')) {
+                    softDelete.mutate(p.id, {
+                      onSuccess: () => {
+                        if (sel) setView('today')
+                      },
+                    })
+                  }
+                }}
+                style={{
+                  ...itemActionStyle('warn'),
+                  opacity: softDelete.isPending ? 0.35 : 0.82,
+                  cursor: softDelete.isPending ? 'not-allowed' : 'pointer',
+                }}
+              >
+                删除
+              </button>
             </div>
           )
         })}

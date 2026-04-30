@@ -3,12 +3,17 @@ import { S } from '@/design/tokens'
 import { todayIso, relDate } from '@/lib/date'
 import { useProject } from '@/features/projects/queries'
 import { useSetTaskStatus, useSoftDeleteTask } from '@/features/tasks/queries'
+import { useTagsForTask } from '@/features/tasks/tagQueries'
 import type { Task, TaskStatus } from '@/lib/types'
 import { Checkbox } from './Checkbox'
 
 interface Props {
   task: Task
   showDate?: boolean
+  showProject?: boolean
+  projectName?: string
+  projectColor?: string
+  onEdit?: (task: Task) => void
 }
 
 const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
@@ -17,18 +22,28 @@ const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
   done: 'not_started',
 }
 
-export function Row({ task, showDate = true }: Props) {
+export function Row({
+  task,
+  showDate = true,
+  showProject = false,
+  projectName,
+  projectColor,
+  onEdit,
+}: Props) {
   const [hovered, setHovered] = useState(false)
   const { data: p } = useProject(task.projectId)
+  const { data: taskTags = [] } = useTagsForTask(task.id)
   const setStatus = useSetTaskStatus()
   const softDelete = useSoftDeleteTask()
 
   const isDone = task.status === 'done'
+  const isSubtask = task.parentTaskId != null
   const todayStr = todayIso()
   const overdue = task.dueDate != null && task.dueDate < todayStr && !isDone
   const today = task.dueDate === todayStr
-  const tag = task.tags?.[0]
-  const color = p?.color ?? '#6C6C6C'
+  const tag = taskTags[0]?.name ?? task.tags?.[0]
+  const color = projectColor ?? p?.color ?? '#6C6C6C'
+  const effectiveProjectName = projectName ?? p?.name
 
   return (
     <div
@@ -52,6 +67,7 @@ export function Row({ task, showDate = true }: Props) {
         <span style={{ width: 3, height: 12, borderRadius: 1.5, background: S.warn, flexShrink: 0 }} />
       )}
       <span
+        onClick={onEdit ? () => onEdit(task) : undefined}
         style={{
           flex: 1,
           fontSize: S.rowSize,
@@ -60,10 +76,51 @@ export function Row({ task, showDate = true }: Props) {
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          cursor: onEdit ? 'pointer' : 'default',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          paddingLeft: isSubtask ? 18 : 0,
         }}
       >
-        {task.name}
+        {isSubtask && (
+          <span
+            style={{
+              fontSize: 12,
+              color: S.fgMuted,
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            ↳
+          </span>
+        )}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.name}</span>
       </span>
+      {showProject && effectiveProjectName && (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            maxWidth: 180,
+            fontSize: 10.5,
+            color: S.fg,
+            background: S.accentSoft,
+            borderRadius: 999,
+            padding: '3px 8px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            flexShrink: 0,
+            fontWeight: 600,
+          }}
+          title={effectiveProjectName}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{effectiveProjectName}</span>
+        </span>
+      )}
       {tag && <span style={{ fontSize: 10, color: S.fgMuted }}>#{tag}</span>}
       {showDate && task.dueDate && (
         <span
@@ -79,6 +136,26 @@ export function Row({ task, showDate = true }: Props) {
         >
           {relDate(task.dueDate)}
         </span>
+      )}
+      {onEdit && (
+        <button
+          onClick={() => onEdit(task)}
+          style={{
+            opacity: hovered ? 0.55 : 0,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0 2px',
+            fontSize: 13,
+            color: S.fgMuted,
+            lineHeight: 1,
+            flexShrink: 0,
+            transition: 'opacity 0.1s',
+          }}
+          title="编辑任务"
+        >
+          ✎
+        </button>
       )}
       <button
         onClick={() => softDelete.mutate(task.id)}

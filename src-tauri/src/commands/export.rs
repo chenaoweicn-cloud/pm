@@ -1,5 +1,6 @@
 use tauri::State;
 use std::fs;
+use std::path::{Path, PathBuf};
 use serde::Serialize;
 use crate::db::{DbState, projects, tasks};
 use crate::error::AppResult;
@@ -10,6 +11,22 @@ use crate::models::{Project, Task};
 struct Bundle {
     projects: Vec<Project>,
     tasks: Vec<Task>,
+}
+
+fn resolve_output_path(raw: &str) -> PathBuf {
+    if let Some(rest) = raw.strip_prefix("~/") {
+        if let Some(home) = directories::UserDirs::new().map(|u| u.home_dir().to_path_buf()) {
+            return home.join(rest);
+        }
+    }
+    PathBuf::from(raw)
+}
+
+fn ensure_parent_dir(path: &Path) -> AppResult<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -26,8 +43,10 @@ pub fn export_json(db: State<'_, DbState>, output_path: String, project_id: Opti
     };
     let bundle = Bundle { projects: all_projects, tasks: all_tasks };
     let json = serde_json::to_string_pretty(&bundle)?;
-    fs::write(&output_path, json)?;
-    Ok(output_path)
+    let resolved_path = resolve_output_path(&output_path);
+    ensure_parent_dir(&resolved_path)?;
+    fs::write(&resolved_path, json)?;
+    Ok(resolved_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
@@ -54,6 +73,8 @@ pub fn export_markdown(db: State<'_, DbState>, output_path: String, start: Optio
         }
         md.push('\n');
     }
-    fs::write(&output_path, md)?;
-    Ok(output_path)
+    let resolved_path = resolve_output_path(&output_path);
+    ensure_parent_dir(&resolved_path)?;
+    fs::write(&resolved_path, md)?;
+    Ok(resolved_path.to_string_lossy().to_string())
 }

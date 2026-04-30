@@ -7,11 +7,12 @@ import type { Project, Task } from '@/lib/types'
 interface Props {
   project: Project
   tasks: Task[]
+  onEditTask?: (task: Task) => void
 }
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 
-export function ProjectTimelinePanel({ project, tasks }: Props) {
+export function ProjectTimelinePanel({ project, tasks, onEditTask }: Props) {
   const today = todayIso()
   const dated = tasks.filter(t => t.dueDate || t.startDate)
   const allDates = dated.flatMap(t => [t.startDate, t.dueDate].filter(Boolean) as string[])
@@ -92,6 +93,7 @@ export function ProjectTimelinePanel({ project, tasks }: Props) {
             }}
           >
             <div
+              onClick={onEditTask ? () => onEditTask(t) : undefined}
               style={{
                 width: nameW,
                 padding: '0 14px',
@@ -101,6 +103,7 @@ export function ProjectTimelinePanel({ project, tasks }: Props) {
                 fontSize: 12,
                 color: done ? S.fgMuted : S.fg,
                 textDecoration: done ? 'line-through' : 'none',
+                cursor: onEditTask ? 'pointer' : 'default',
               }}
             >
               <Checkbox status={t.status} color={project.color ?? '#6C6C6C'} />

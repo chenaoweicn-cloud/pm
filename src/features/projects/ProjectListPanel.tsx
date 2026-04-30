@@ -1,40 +1,45 @@
 import { S } from '@/design/tokens'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { Row } from '@/components/ui/Row'
-import type { Task, TaskGroup } from '@/lib/types'
+import type { Task } from '@/lib/types'
 
 interface Props {
-  groups: TaskGroup[]
   tasks: Task[]
+  onEditTask?: (task: Task) => void
 }
 
-export function ProjectListPanel({ groups, tasks }: Props) {
-  const grouped = groups.length
-    ? groups.map(g => ({ name: g.name, items: tasks.filter(t => t.groupId === g.id) }))
-    : [{ name: '全部任务', items: tasks }]
-
-  if (groups.length) {
-    const ungrouped = tasks.filter(t => t.groupId == null)
-    if (ungrouped.length) grouped.push({ name: '其他', items: ungrouped })
+export function ProjectListPanel({ tasks, onEditTask }: Props) {
+  const rootTasks = tasks.filter(task => task.parentTaskId == null)
+  const childMap = new Map<number, Task[]>()
+  for (const task of tasks) {
+    if (task.parentTaskId == null) continue
+    const list = childMap.get(task.parentTaskId) ?? []
+    list.push(task)
+    childMap.set(task.parentTaskId, list)
   }
 
   return (
     <>
-      {grouped.map((g, i) => (
-        <GroupCard key={i}>
-          <GroupHeader
-            title={g.name}
-            count={`${g.items.filter(t => t.status === 'done').length} / ${g.items.length}`}
-          />
-          {g.items.length === 0 ? (
+      <GroupCard>
+        <GroupHeader
+          title="全部任务"
+          count={`${tasks.filter(t => t.status === 'done').length} / ${tasks.length}`}
+        />
+        {tasks.length === 0 ? (
             <div style={{ padding: '10px 18px', fontSize: 12, color: S.fgMuted, fontStyle: 'italic' }}>
               暂无任务
             </div>
           ) : (
-            g.items.map(t => <Row key={t.id} task={t} />)
+            rootTasks.map(task => (
+              <div key={task.id}>
+                <Row task={task} onEdit={onEditTask} />
+                {(childMap.get(task.id) ?? []).map(child => (
+                  <Row key={child.id} task={child} onEdit={onEditTask} />
+                ))}
+              </div>
+            ))
           )}
-        </GroupCard>
-      ))}
+      </GroupCard>
     </>
   )
 }

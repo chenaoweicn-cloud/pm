@@ -25,23 +25,50 @@ const inputStyle: React.CSSProperties = {
   borderRadius: S.inputRadius,
   padding: '7px 10px',
   fontSize: 13,
-  width: 400,
+  width: '100%',
   fontFamily: S.font,
   background: S.bg,
   color: S.fg,
   outline: 'none',
+  minWidth: 0,
+}
+
+const DEFAULT_JSON_PATH = '~/Documents/pm-export.json'
+const DEFAULT_MD_PATH = '~/Documents/pm-this-month.md'
+
+function deriveExportBaseDir(backupDir: string) {
+  if (!backupDir) return null
+  const normalized = backupDir.replace(/\/+$/, '')
+  if (normalized.endsWith('/pm-backups')) {
+    return normalized.slice(0, -'/pm-backups'.length)
+  }
+  const lastSlash = normalized.lastIndexOf('/')
+  return lastSlash > 0 ? normalized.slice(0, lastSlash) : null
 }
 
 export function SettingsView() {
   const [backupDir, setBackupDir] = useState<string>('')
-  const [jsonPath, setJsonPath] = useState('~/Documents/pm-export.json')
-  const [mdPath, setMdPath] = useState('~/Documents/pm-this-month.md')
+  const [jsonPath, setJsonPath] = useState(DEFAULT_JSON_PATH)
+  const [mdPath, setMdPath] = useState(DEFAULT_MD_PATH)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    api.getDefaultBackupDir().then(setBackupDir).catch(() => setBackupDir('（获取失败）'))
+    api
+      .getDefaultBackupDir()
+      .then((dir) => {
+        setBackupDir(dir)
+        const exportBaseDir = deriveExportBaseDir(dir)
+        if (!exportBaseDir) return
+        setJsonPath((current) =>
+          current === DEFAULT_JSON_PATH ? `${exportBaseDir}/pm-export.json` : current,
+        )
+        setMdPath((current) =>
+          current === DEFAULT_MD_PATH ? `${exportBaseDir}/pm-this-month.md` : current,
+        )
+      })
+      .catch(() => setBackupDir('（获取失败）'))
   }, [])
 
   async function handleBackup() {
@@ -103,7 +130,8 @@ export function SettingsView() {
   }
 
   return (
-    <div style={{ padding: S.contentPad, maxWidth: 560 }}>
+    <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
+      <div style={{ width: '100%', maxWidth: 560 }}>
       <div style={{ fontSize: S.heroSize, fontWeight: S.heroWeight, marginBottom: 24 }}>
         设置
       </div>
@@ -126,7 +154,7 @@ export function SettingsView() {
         {/* 导出 JSON */}
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="json-path" style={labelStyle}>输出路径</label>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               id="json-path"
               style={inputStyle}
@@ -142,7 +170,7 @@ export function SettingsView() {
         {/* 导出本月 Markdown */}
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="md-path" style={labelStyle}>输出路径</label>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               id="md-path"
               style={inputStyle}
@@ -163,6 +191,7 @@ export function SettingsView() {
       {err && (
         <div style={{ color: S.warn, fontSize: 12 }}>{err}</div>
       )}
+      </div>
     </div>
   )
 }

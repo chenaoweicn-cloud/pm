@@ -3,10 +3,12 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { GroupHeader } from '@/components/ui/GroupCard'
 import { relDate } from '@/lib/date'
 import type { Project, Task, TaskStatus } from '@/lib/types'
+import { useSetTaskStatus } from '@/features/tasks/queries'
 
 interface Props {
   project: Project
   tasks: Task[]
+  onEditTask?: (task: Task) => void
 }
 
 const COLS: { key: TaskStatus; name: string }[] = [
@@ -15,9 +17,16 @@ const COLS: { key: TaskStatus; name: string }[] = [
   { key: 'done', name: '已完成' },
 ]
 
-export function ProjectBoardPanel({ project, tasks }: Props) {
+export function ProjectBoardPanel({ project, tasks, onEditTask }: Props) {
+  const setStatus = useSetTaskStatus()
+
+  const moveTask = (task: Task, status: TaskStatus) => {
+    if (task.status === status || setStatus.isPending) return
+    setStatus.mutate({ id: task.id, status })
+  }
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
       {COLS.map(c => {
         const list = tasks.filter(t => t.status === c.key)
         return (
@@ -38,11 +47,13 @@ export function ProjectBoardPanel({ project, tasks }: Props) {
               {list.map(t => (
                 <div
                   key={t.id}
+                  onClick={onEditTask ? () => onEditTask(t) : undefined}
                   style={{
                     padding: '9px 11px',
                     borderRadius: 8,
                     background: S.bg,
                     border: S.hairline,
+                    cursor: onEditTask ? 'pointer' : 'default',
                   }}
                 >
                   <div
@@ -93,6 +104,63 @@ export function ProjectBoardPanel({ project, tasks }: Props) {
                       {t.tags?.[0] && <span>#{t.tags[0]}</span>}
                     </div>
                   )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 6,
+                      marginTop: 8,
+                    }}
+                  >
+                    {t.status !== 'not_started' && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          moveTask(t, t.status === 'done' ? 'in_progress' : 'not_started')
+                        }}
+                        aria-label={`将任务 ${t.name} 移动到前一列`}
+                        title="移动到前一列"
+                        style={{
+                          background: 'transparent',
+                          border: S.hairline,
+                          borderRadius: 6,
+                          color: S.fgMuted,
+                          cursor: setStatus.isPending ? 'not-allowed' : 'pointer',
+                          fontFamily: S.font,
+                          fontSize: 12,
+                          padding: '3px 8px',
+                          opacity: setStatus.isPending ? 0.6 : 1,
+                        }}
+                      >
+                        ←
+                      </button>
+                    )}
+                    {t.status !== 'done' && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          moveTask(t, t.status === 'not_started' ? 'in_progress' : 'done')
+                        }}
+                        aria-label={`将任务 ${t.name} 移动到后一列`}
+                        title="移动到后一列"
+                        style={{
+                          background: 'transparent',
+                          border: S.hairline,
+                          borderRadius: 6,
+                          color: S.fgMuted,
+                          cursor: setStatus.isPending ? 'not-allowed' : 'pointer',
+                          fontFamily: S.font,
+                          fontSize: 12,
+                          padding: '3px 8px',
+                          opacity: setStatus.isPending ? 0.6 : 1,
+                        }}
+                      >
+                        →
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {list.length === 0 && (

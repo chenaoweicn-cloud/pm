@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
@@ -7,44 +7,95 @@ import { todayIso, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange }
 import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
 import { useCompletedInRange, useInProgressTasks } from '@/features/tasks/queries'
 import type { Task } from '@/lib/types'
+import { TaskForm } from '@/features/tasks/TaskForm'
 
-type Range = 'week' | 'month' | 'quarter' | 'custom'
+type Range = 'week' | 'month' | 'custom'
 
 const SEG: { key: Range; label: string }[] = [
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
-  { key: 'quarter', label: '本季' },
   { key: 'custom', label: '自定义' },
 ]
 
-function getRangeDates(range: Range): { start: string; endExclusive: string } {
-  if (range === 'month') return thisMonthRange()
-  if (range === 'quarter') {
-    const now = new Date()
-    const q = Math.floor(now.getMonth() / 3)
-    const start = new Date(now.getFullYear(), q * 3, 1)
-    const end = new Date(now.getFullYear(), q * 3 + 3, 1)
-    return { start: isoDate(start), endExclusive: isoDate(end) }
+type DateRange = {
+  start: string
+  endInclusive: string
+  endExclusive: string
+}
+
+function nextDate(iso: string): string {
+  const date = new Date(iso)
+  date.setDate(date.getDate() + 1)
+  return isoDate(date)
+}
+
+function getDefaultCustomRange(): { start: string; endInclusive: string } {
+  const { start, endExclusive } = thisWeekRange()
+  return {
+    start,
+    endInclusive: isoDate(new Date(+new Date(endExclusive) - 86400000)),
   }
-  return thisWeekRange() // week + custom both default to week
+}
+
+function getRangeDates(
+  range: Exclude<Range, 'custom'>,
+): DateRange {
+  if (range === 'month') {
+    const { start, endExclusive } = thisMonthRange()
+    return {
+      start,
+      endInclusive: isoDate(new Date(+new Date(endExclusive) - 86400000)),
+      endExclusive,
+    }
+  }
+
+  const { start, endExclusive } = thisWeekRange()
+  return {
+    start,
+    endInclusive: isoDate(new Date(+new Date(endExclusive) - 86400000)),
+    endExclusive,
+  }
+}
+
+function normalizeRange(customRange: { start: string; endInclusive: string }): DateRange {
+  const endInclusive = customRange.endInclusive >= customRange.start
+    ? customRange.endInclusive
+    : customRange.start
+
+  return {
+    start: customRange.start,
+    endInclusive,
+    endExclusive: nextDate(endInclusive),
+  }
+}
+
+function completedDay(value: string | null): string {
+  return value?.slice(0, 10) ?? ''
 }
 
 export function HistoryView() {
   const [range, setRange] = useState<Range>('week')
-  const { start, endExclusive } = getRangeDates(range)
+  const [includeArchived, setIncludeArchived] = useState(false)
+  const [customRange, setCustomRange] = useState(getDefaultCustomRange)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
-  const { data: completedTasks = [] } = useCompletedInRange(start, endExclusive, true)
-  const { data: inflightTasks = [] } = useInProgressTasks(true)
+  const { start, endInclusive, endExclusive } = useMemo(() => {
+    if (range === 'custom') return normalizeRange(customRange)
+    return getRangeDates(range)
+  }, [customRange, range])
+
+  const { data: completedTasks = [] } = useCompletedInRange(start, endExclusive, includeArchived)
+  const { data: inflightTasks = [] } = useInProgressTasks(includeArchived)
   const { data: activeProjects = [] } = useActiveProjects()
   const { data: archivedProjects = [] } = useArchivedProjects()
-  const projects = [...activeProjects, ...archivedProjects]
+  const projects = includeArchived ? [...activeProjects, ...archivedProjects] : activeProjects
 
   const completed = [...completedTasks].sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
   const inflight = inflightTasks
 
   const byDate: Record<string, Task[]> = {}
   for (const t of completed) {
-    const k = t.completedAt ?? ''
+    const k = completedDay(t.completedAt)
     if (!k) continue
     ;(byDate[k] ??= []).push(t)
   }
@@ -53,7 +104,25 @@ export function HistoryView() {
     ;(byProj[t.projectId] ??= []).push(t)
   }
 
-  const rangeLabel = `${formatDate(start)} — ${formatDate(endExclusive)}`
+  const rangeLabel = `${formatDate(start)} — ${formatDate(endInclusive)}`
+
+  const filterControlStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 12,
+    color: S.fgMuted,
+  }
+
+  const dateInputStyle: React.CSSProperties = {
+    border: S.hairline,
+    borderRadius: 6,
+    padding: '5px 8px',
+    fontSize: 12,
+    fontFamily: S.font,
+    background: '#fff',
+    color: S.fg,
+  }
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
@@ -117,9 +186,42 @@ export function HistoryView() {
             })}
           </div>
         </div>
+        <div style={{ display: 'flex', gap: 14, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={filterControlStyle}>
+            <input
+              type="checkbox"
+              checked={includeArchived}
+              onChange={e => setIncludeArchived(e.target.checked)}
+            />
+            包含归档项目
+          </label>
+          {range === 'custom' && (
+            <>
+              <label style={filterControlStyle}>
+                开始
+                <input
+                  type="date"
+                  value={customRange.start}
+                  onChange={e => setCustomRange(current => ({ ...current, start: e.target.value }))}
+                  style={dateInputStyle}
+                />
+              </label>
+              <label style={filterControlStyle}>
+                结束
+                <input
+                  type="date"
+                  value={customRange.endInclusive}
+                  min={customRange.start}
+                  onChange={e => setCustomRange(current => ({ ...current, endInclusive: e.target.value }))}
+                  style={dateInputStyle}
+                />
+              </label>
+            </>
+          )}
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
         <GroupCard>
           <GroupHeader title="已完成 · 时间线" count={completed.length} />
           {Object.keys(byDate)
@@ -147,7 +249,15 @@ export function HistoryView() {
                   </span>
                 </div>
                 {byDate[date].map(t => (
-                  <Row key={t.id} task={t} showDate={false} />
+                  <Row
+                    key={t.id}
+                    task={t}
+                    showDate={false}
+                    showProject
+                    projectName={projects.find(project => project.id === t.projectId)?.name}
+                    projectColor={projects.find(project => project.id === t.projectId)?.color}
+                    onEdit={setEditingTask}
+                  />
                 ))}
               </div>
             ))}
@@ -161,43 +271,26 @@ export function HistoryView() {
               <GroupCard key={pid}>
                 <GroupHeader color={p.color} title={p.name} type={p.type ?? undefined} count={list.length} />
                 {list.map(t => (
-                  <Row key={t.id} task={t} />
+                  <Row
+                    key={t.id}
+                    task={t}
+                    showProject
+                    projectName={p.name}
+                    projectColor={p.color}
+                    onEdit={setEditingTask}
+                  />
                 ))}
               </GroupCard>
             )
           })}
         </div>
       </div>
-
-      <div
-        style={{
-          marginTop: 14,
-          padding: '12px 16px',
-          background: S.accentSoft,
-          borderRadius: S.cardRadius,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          fontSize: 13,
-          color: S.fg,
-        }}
-      >
-        <span style={{ fontSize: 14 }}>✎</span>
-        <span style={{ flex: 1 }}>把上面的内容整理成周报？</span>
-        <span
-          style={{
-            padding: '4px 10px',
-            background: '#fff',
-            borderRadius: 5,
-            fontSize: 12,
-            color: S.fg,
-            fontWeight: 500,
-            border: S.hairline,
-          }}
-        >
-          复制为 Markdown
-        </span>
-      </div>
+      {editingTask && (
+        <TaskForm
+          initialTask={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
     </div>
   )
 }

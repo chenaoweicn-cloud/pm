@@ -1,23 +1,28 @@
+import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
-import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
+import { GroupCard } from '@/components/ui/GroupCard'
 import { todayIso, formatDate } from '@/lib/date'
 import { useActiveProjects } from '@/features/projects/queries'
 import { useTodayTasks } from '@/features/tasks/queries'
 import type { Task } from '@/lib/types'
+import { TaskForm } from '@/features/tasks/TaskForm'
 
 export function TodayView() {
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const today = todayIso()
   const { data: ts = [] } = useTodayTasks(today)
   const { data: projects = [] } = useActiveProjects()
 
-  const byProject = new Map<number, Task[]>()
-  for (const t of ts) {
-    const list = byProject.get(t.projectId) ?? []
-    list.push(t)
-    byProject.set(t.projectId, list)
-  }
+  const projectSections = projects
+    .map(project => ({
+      project,
+      tasks: ts.filter(task => task.projectId === project.id),
+    }))
+    .filter(section => section.tasks.length > 0)
+
+  const orphanTasks = ts.filter(task => !projects.some(project => project.id === task.projectId))
 
   const now = new Date()
   const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -63,18 +68,118 @@ export function TodayView() {
         </div>
       </div>
 
-      {[...byProject.entries()].map(([pid, list]) => {
-        const p = projects.find(x => x.id === pid)
-        if (!p) return null
-        return (
-          <GroupCard key={pid}>
-            <GroupHeader color={p.color} title={p.name} type={p.type ?? undefined} count={list.length} />
-            {list.map(t => (
-              <Row key={t.id} task={t} />
+      {projectSections.map(({ project, tasks }) => (
+          <GroupCard key={project.id}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '16px 18px 10px',
+                borderBottom: S.hairline,
+              }}
+            >
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: project.color ?? '#6C6C6C',
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  color: S.fg,
+                  letterSpacing: -0.1,
+                }}
+              >
+                {project.name}
+              </span>
+              {project.type && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: '2px 7px',
+                    borderRadius: 5,
+                    background: S.chipBg,
+                    color: S.fgMuted,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                >
+                  {project.type}
+                </span>
+              )}
+              <div style={{ flex: 1 }} />
+              <span
+                style={{
+                  fontSize: 12,
+                  color: S.fgMuted,
+                  fontWeight: 600,
+                }}
+              >
+                {tasks.length}
+              </span>
+            </div>
+            {tasks.map(t => (
+              <Row key={t.id} task={t} onEdit={setEditingTask} />
             ))}
           </GroupCard>
-        )
-      })}
+      ))}
+      {orphanTasks.length > 0 && (
+        <GroupCard>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '16px 18px 10px',
+              borderBottom: S.hairline,
+            }}
+          >
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: '#BDB7AD',
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: 13.5,
+                fontWeight: 700,
+                color: S.fg,
+              }}
+            >
+              未归类项目
+            </span>
+            <div style={{ flex: 1 }} />
+            <span
+              style={{
+                fontSize: 12,
+                color: S.fgMuted,
+                fontWeight: 600,
+              }}
+            >
+              {orphanTasks.length}
+            </span>
+          </div>
+          {orphanTasks.map(task => (
+            <Row key={task.id} task={task} onEdit={setEditingTask} />
+          ))}
+        </GroupCard>
+      )}
+      {editingTask && (
+        <TaskForm
+          initialTask={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
     </div>
   )
 }
