@@ -39,11 +39,10 @@
 ## 文档
 
 - 需求规格：[docs/spec.md](docs/spec.md)
-- V1 计划：[docs/plans/v1/README.md](docs/plans/v1/README.md)
 
 说明：
 - `docs/spec.md` 仍然是功能范围的主要参考
-- `docs/plans/v1/README.md` 更适合当历史实现计划看待，部分内容已经落后于实际代码
+- 旧的 agent 执行计划文档已经从公开源码中移除，避免上传历史过程资料
 
 ## 本地开发
 
