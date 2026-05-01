@@ -1,38 +1,49 @@
-# pm · V1 实现计划
+# pm · V1 实现计划（历史文档）
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Date:** 2026-04-23
+**Date:** 2026-04-23<br>
+**Status:** 历史计划，已不再代表当前仓库真实状态
 
 **Goal:** 实现 `docs/spec.md` 定义的 V1 个人项目管理工具（Tauri + React + SQLite 桌面应用）
 
-**Architecture:**
-后端用 Rust（Tauri IPC + rusqlite + 原生 SQL）做所有数据操作和系统集成；前端用 React + TypeScript + shadcn/ui 实现视图层，TanStack Query 负责缓存 IPC 结果。所有功能通过 `lib/api.ts` 作为前后端唯一契约点。
+**Current reality:**
+- 仓库已经包含 `src-tauri/`、Rust 命令层、SQLite、本地备份与导出能力
+- 前端也已经不是“占位 UI”，而是完整的 Things 风格应用界面
+- 本文档保留的主要价值是：查看 V1 当初的拆解方式和任务顺序，而不是指导当前逐步实施
 
-**Tech Stack:** Tauri 2.x · Rust · rusqlite · React 18 · TypeScript · Vite · shadcn/ui · Tailwind · TanStack Query · React Router · date-fns · Vitest · cargo test
+**Actual stack in repo now:** Tauri 2.x · Rust · rusqlite · React 18 · TypeScript · Vite · TanStack Query · Vitest · cargo test<br>
+**No longer accurate in this document:** shadcn/ui、Tailwind、React Router 是原计划设想，不是当前仓库事实
 
-> **如何阅读本计划：** 本目录下的 `01-*.md` 到 `38-*.md` 是按执行顺序编号的独立任务文件，每次执行一个任务时只需打开对应文件即可。本 README 提供总览、文件结构蓝图、任务索引和依赖图。
+> **如何使用本文档：**
+> - 看“为什么当初这么拆任务”，可以继续读
+> - 看“当前项目应该怎么开发”，请优先看根目录 [README.md](../../../README.md) 和 [docs/spec.md](../../spec.md)
+> - 不要再按本文档里的技术栈、文件结构蓝图、占位 UI 计划机械执行
 
 ---
 
-## 计划状态变更（2026-04-27 更新）
+## 当前定位（2026-04-30）
 
-**本计划原设计为 P1→P2→P3→P4→P5 顺序执行，UI 留到最后。实际执行偏离了这个顺序**——前端已经按 Things 风格设计稿提前实现完毕（一次性覆盖了 P4 + P5）。后续按下表的修订版本执行：
+这份计划最初按 `P1 → P2 → P3 → P4 → P5` 设计，默认先做后端和占位 UI，再等设计稿重构。实际仓库演进已经明显偏离这条路径，所以这里给出一版“如何理解旧计划”的映射：
 
 | 阶段 | 原计划 | 当前状态 |
 |---|---|---|
-| P1 | 9 个任务 | **任务 1 需要重写**（已有 Vite/React/TS 脚手架，不能再跑 `pnpm create tauri-app`，改为手动加 `src-tauri/` + `@tauri-apps/cli` + `@tauri-apps/api`）；任务 2-9 照原样执行 |
-| P2 | 13 个任务 | 全部照原样执行 |
-| P3 | 6 个任务 | **任务 23 改为合并而非新建**（`src/lib/types.ts` 已存在，按计划补齐缺字段）；任务 24-28 照原样，但前置需 `pnpm add @tanstack/react-query` |
-| P4 | 10 个任务 | **整段跳过**（已被 Things 风格真 UI 替代，见 `src/features/*` 和 `src/design/tokens.ts`） |
-| P5 | 单独计划 | **不再需要**（与 P4 一同被前端原型覆盖） |
-| **新增 · Wiring** | — | **任务 39**：把现有组件里 `import from '@/lib/mockData'` 替换成 P3 写好的 Query hooks；把 `src/lib/date.ts` 里写死的 `TODAY = '2026-04-23'` 换成 `new Date().toISOString().slice(0, 10)`；删除 `mockData.ts` |
+| P1 | 地基 | 已完成，且实现方式和原文档不同 |
+| P2 | 后端数据层 | 大部分已落地，不能再当“待开始”阅读 |
+| P3 | 前端数据契约 | 已完成并实际接入 |
+| P4 | 占位 UI | 已失效，当前仓库不是占位 UI |
+| P5 | UI 重构 | 已被实际前端实现吸收，不再单列 |
 
-**实际待做：28 个原任务（P1-P3 减去任务 1、23 的旧版本）+ 2 个调整版任务（1、23）+ 1 个新增 wiring（39）。**
+如果你现在要推进项目：
+- 功能范围以 `docs/spec.md` 为准
+- 当前工程状态以根目录 `README.md` 为准
+- 本目录下 `01-*.md` 到 `38-*.md` 主要作为历史拆解参考
 
 ---
 
 ## 分阶段策略
+
+> **说明：** 本节以下的大量内容保留的是“原计划蓝图”，不是当前代码树的实时映射。
 
 | 阶段 | 内容 | 设计稿依赖 |
 |---|---|---|
@@ -46,7 +57,7 @@
 
 ---
 
-## 文件结构蓝图
+## 文件结构蓝图（原计划）
 
 ```
 pm/
@@ -131,9 +142,9 @@ pm/
 
 ---
 
-## 任务索引
+## 任务索引（历史拆解）
 
-按文件名顺序对应执行顺序。每次执行只读对应任务文件即可。
+按文件名顺序记录原始执行顺序。现在阅读这些任务时，需要自行对照当前仓库结构，不可直接假定“文件不存在/功能未实现/需要从零开始”。
 
 ### P1 · 地基
 
