@@ -87,6 +87,17 @@ pub fn list_all_active(conn: &Connection) -> AppResult<Vec<Task>> {
     Ok(rows)
 }
 
+pub fn list_all_non_deleted(conn: &Connection) -> AppResult<Vec<Task>> {
+    let mut stmt = conn.prepare(
+        "SELECT t.* FROM tasks t
+         JOIN projects p ON t.project_id = p.id
+         WHERE t.deleted_at IS NULL AND p.deleted_at IS NULL
+         ORDER BY t.created_at DESC",
+    )?;
+    let rows = stmt.query_map([], row_to_task)?.collect::<Result<_, _>>()?;
+    Ok(rows)
+}
+
 pub fn update(conn: &Connection, id: i64, input: TaskInput) -> AppResult<Task> {
     conn.execute(
         "UPDATE tasks SET
@@ -124,7 +135,9 @@ pub fn set_status(conn: &Connection, id: i64, status: &str) -> AppResult<Task> {
 
 pub fn soft_delete(conn: &Connection, id: i64) -> AppResult<()> {
     conn.execute(
-        "UPDATE tasks SET deleted_at=datetime('now'), updated_at=datetime('now') WHERE id=?1",
+        "UPDATE tasks
+         SET deleted_at=datetime('now'), updated_at=datetime('now')
+         WHERE id=?1 OR parent_task_id=?1",
         params![id],
     )?;
     Ok(())
@@ -213,6 +226,66 @@ mod tests {
         let child = create(&conn, TaskInput { project_id: pid, name: "C".into(), parent_task_id: Some(root.id), ..Default::default() }).unwrap();
         let err = create(&conn, TaskInput { project_id: pid, name: "GC".into(), parent_task_id: Some(child.id), ..Default::default() });
         assert!(err.is_err());
+    }
+
+    #[test]
+    fn soft_delete_parent_also_deletes_children() {
+        let (conn, pid) = setup();
+        let root = create(
+            &conn,
+            TaskInput {
+                project_id: pid,
+                name: "R".into(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let child = create(
+            &conn,
+            TaskInput {
+                project_id: pid,
+                name: "C".into(),
+                parent_task_id: Some(root.id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        soft_delete(&conn, root.id).unwrap();
+
+        assert!(get(&conn, root.id).unwrap().deleted_at.is_some());
+        assert!(get(&conn, child.id).unwrap().deleted_at.is_some());
+        assert!(list_for_project(&conn, pid).unwrap().is_empty());
+    }
+
+    #[test]
+    fn list_all_non_deleted_includes_archived_project_tasks() {
+        let conn = in_memory_for_test();
+        let active = projects::create(&conn, "Active", None, None, None).unwrap();
+        let archived = projects::create(&conn, "Archived", None, None, None).unwrap();
+        projects::archive(&conn, archived.id).unwrap();
+
+        create(
+            &conn,
+            TaskInput {
+                project_id: active.id,
+                name: "A".into(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        create(
+            &conn,
+            TaskInput {
+                project_id: archived.id,
+                name: "B".into(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(list_all_active(&conn).unwrap().len(), 1);
+        assert_eq!(list_all_non_deleted(&conn).unwrap().len(), 2);
     }
 
     #[test]

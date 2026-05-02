@@ -81,6 +81,7 @@ pub fn run() {
       commands::tags::upsert_tag,
       commands::tags::list_tags,
       commands::tags::list_tags_for_task,
+      commands::tags::list_first_tag_names_for_tasks,
       commands::tags::attach_tag,
       commands::tags::detach_tag,
       commands::attachments::create_attachment,

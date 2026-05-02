@@ -6,6 +6,7 @@ import { GroupCard } from '@/components/ui/GroupCard'
 import { todayIso, formatDate } from '@/lib/date'
 import { useActiveProjects } from '@/features/projects/queries'
 import { useTodayTasks } from '@/features/tasks/queries'
+import { useFirstTagNamesForTasks } from '@/features/tasks/tagQueries'
 import type { Task } from '@/lib/types'
 import { TaskForm } from '@/features/tasks/TaskForm'
 
@@ -14,6 +15,7 @@ export function TodayView() {
   const today = todayIso()
   const { data: ts = [] } = useTodayTasks(today)
   const { data: projects = [] } = useActiveProjects()
+  const { data: tagNames = {} } = useFirstTagNamesForTasks(ts.map(task => task.id))
 
   const projectSections = projects
     .map(project => ({
@@ -125,7 +127,13 @@ export function TodayView() {
               </span>
             </div>
             {tasks.map(t => (
-              <Row key={t.id} task={t} onEdit={setEditingTask} />
+              <Row
+                key={t.id}
+                task={t}
+                projectColor={project.color ?? '#6C6C6C'}
+                tagName={tagNames[t.id]}
+                onEdit={setEditingTask}
+              />
             ))}
           </GroupCard>
       ))}
@@ -170,7 +178,7 @@ export function TodayView() {
             </span>
           </div>
           {orphanTasks.map(task => (
-            <Row key={task.id} task={task} onEdit={setEditingTask} />
+            <Row key={task.id} task={task} tagName={tagNames[task.id]} onEdit={setEditingTask} />
           ))}
         </GroupCard>
       )}

@@ -3,7 +3,6 @@ import { S } from '@/design/tokens'
 import { todayIso, relDate } from '@/lib/date'
 import { useProject } from '@/features/projects/queries'
 import { useSetTaskStatus, useSoftDeleteTask } from '@/features/tasks/queries'
-import { useTagsForTask } from '@/features/tasks/tagQueries'
 import type { Task, TaskStatus } from '@/lib/types'
 import { Checkbox } from './Checkbox'
 
@@ -13,6 +12,7 @@ interface Props {
   showProject?: boolean
   projectName?: string
   projectColor?: string
+  tagName?: string | null
   onEdit?: (task: Task) => void
 }
 
@@ -28,11 +28,12 @@ export function Row({
   showProject = false,
   projectName,
   projectColor,
+  tagName,
   onEdit,
 }: Props) {
   const [hovered, setHovered] = useState(false)
-  const { data: p } = useProject(task.projectId)
-  const { data: taskTags = [] } = useTagsForTask(task.id)
+  const shouldLoadProject = showProject && projectName == null
+  const { data: p } = useProject(task.projectId, shouldLoadProject)
   const setStatus = useSetTaskStatus()
   const softDelete = useSoftDeleteTask()
 
@@ -41,7 +42,7 @@ export function Row({
   const todayStr = todayIso()
   const overdue = task.dueDate != null && task.dueDate < todayStr && !isDone
   const today = task.dueDate === todayStr
-  const tag = taskTags[0]?.name ?? task.tags?.[0]
+  const tag = tagName ?? task.tags?.[0]
   const color = projectColor ?? p?.color ?? '#6C6C6C'
   const effectiveProjectName = projectName ?? p?.name
 

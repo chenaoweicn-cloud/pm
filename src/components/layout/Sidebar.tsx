@@ -77,23 +77,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
         overflow: 'auto',
       }}
     >
-      <div
-        style={{
-          height: 36,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 12px',
-          marginBottom: 4,
-        }}
-      >
-        <div style={{ display: 'flex', gap: 6 }}>
-          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57' }} />
-          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e' }} />
-          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840' }} />
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap, marginTop: 2 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap, marginTop: 10 }}>
         {navItems.map(i => {
           const sel = i.key === view
           return (

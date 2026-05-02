@@ -124,7 +124,7 @@ export function ProjectDetail({ projectId }: Props) {
       </div>
 
       <div style={{ flex: 1, overflow: 'auto', padding: '0 36px 36px' }}>
-        {mode === 'list' && <ProjectListPanel tasks={tasks} onEditTask={setEditingTask} />}
+        {mode === 'list' && <ProjectListPanel tasks={tasks} projectColor={p.color ?? '#6C6C6C'} onEditTask={setEditingTask} />}
         {mode === 'board' && <ProjectBoardPanel project={p} tasks={tasks} onEditTask={setEditingTask} />}
         {mode === 'timeline' && <ProjectTimelinePanel project={p} tasks={tasks} onEditTask={setEditingTask} />}
       </div>

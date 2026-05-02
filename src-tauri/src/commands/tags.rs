@@ -1,4 +1,5 @@
 use tauri::State;
+use std::collections::HashMap;
 use crate::db::{DbState, tags};
 use crate::error::AppResult;
 use crate::models::Tag;
@@ -19,6 +20,12 @@ pub fn list_tags(db: State<'_, DbState>) -> AppResult<Vec<Tag>> {
 pub fn list_tags_for_task(db: State<'_, DbState>, task_id: i64) -> AppResult<Vec<Tag>> {
     let conn = db.0.lock().unwrap();
     tags::list_for_task(&conn, task_id)
+}
+
+#[tauri::command]
+pub fn list_first_tag_names_for_tasks(db: State<'_, DbState>, task_ids: Vec<i64>) -> AppResult<HashMap<i64, String>> {
+    let conn = db.0.lock().unwrap();
+    tags::list_first_names_for_tasks(&conn, &task_ids)
 }
 
 #[tauri::command]

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
-import { useSearch } from '@/features/search/queries'
+import { SEARCH_MIN_CHARS, useSearch } from '@/features/search/queries'
 import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
 import type { Project, Task } from '@/lib/types'
 
@@ -25,6 +25,7 @@ export function GlobalSearch({ onClose, onOpenProject }: Props) {
   const matchProjects = results?.projects ?? []
   const taskMatches = matches.slice(0, 6)
   const allProjects = [...activeProjects, ...archivedProjects]
+  const canSearch = q.trim().length >= SEARCH_MIN_CHARS
 
   const items = useMemo<SearchItem[]>(
     () => [
@@ -153,7 +154,7 @@ export function GlobalSearch({ onClose, onOpenProject }: Props) {
         </div>
 
         <div style={{ flex: 1, overflow: 'auto', padding: '4px 0' }}>
-          {items.length === 0 && q.trim().length > 0 && (
+          {items.length === 0 && canSearch && (
             <div
               style={{
                 padding: '18px',

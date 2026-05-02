@@ -4,6 +4,7 @@ import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { Row } from '@/components/ui/Row'
 import { useAllActiveTasks } from '@/features/tasks/queries'
 import { useActiveProjects } from '@/features/projects/queries'
+import { useFirstTagNamesForTasks } from '@/features/tasks/tagQueries'
 import type { Task } from '@/lib/types'
 import { TaskForm } from '@/features/tasks/TaskForm'
 
@@ -14,6 +15,7 @@ export function CrossView() {
   const ts = allTasks.filter(t => t.status !== 'done').sort((a, b) =>
     (a.dueDate ?? 'z').localeCompare(b.dueDate ?? 'z'),
   )
+  const { data: tagNames = {} } = useFirstTagNamesForTasks(ts.map(task => task.id))
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
@@ -51,7 +53,8 @@ export function CrossView() {
               task={t}
               showProject
               projectName={project?.name}
-              projectColor={project?.color}
+              projectColor={project?.color ?? '#6C6C6C'}
+              tagName={tagNames[t.id]}
               onEdit={setEditingTask}
             />
           )

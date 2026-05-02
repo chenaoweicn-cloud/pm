@@ -38,6 +38,44 @@ pub fn purge_project(conn: &Connection, id: i64) -> AppResult<()> {
 }
 
 pub fn purge_task(conn: &Connection, id: i64) -> AppResult<()> {
+    conn.execute("DELETE FROM tasks WHERE parent_task_id=?1", params![id])?;
     conn.execute("DELETE FROM tasks WHERE id=?1", params![id])?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::{in_memory_for_test, projects, tasks};
+
+    #[test]
+    fn purge_parent_task_deletes_children_first() {
+        let conn = in_memory_for_test();
+        let project = projects::create(&conn, "P", None, None, None).unwrap();
+        let root = tasks::create(
+            &conn,
+            tasks::TaskInput {
+                project_id: project.id,
+                name: "R".into(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let child = tasks::create(
+            &conn,
+            tasks::TaskInput {
+                project_id: project.id,
+                name: "C".into(),
+                parent_task_id: Some(root.id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        tasks::soft_delete(&conn, root.id).unwrap();
+        purge_task(&conn, root.id).unwrap();
+
+        assert!(tasks::get(&conn, child.id).is_err());
+        assert!(tasks::get(&conn, root.id).is_err());
+    }
 }

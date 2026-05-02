@@ -11,6 +11,15 @@ export const useTagsForTask = (taskId: number | null) =>
     enabled: taskId != null,
   })
 
+export const useFirstTagNamesForTasks = (taskIds: number[]) => {
+  const uniqueIds = [...new Set(taskIds)].sort((a, b) => a - b)
+  return useQuery({
+    queryKey: ['tags', 'task-first', uniqueIds],
+    queryFn: () => api.listFirstTagNamesForTasks(uniqueIds),
+    enabled: uniqueIds.length > 0,
+  })
+}
+
 export function useAttachTag() {
   const qc = useQueryClient()
   return useMutation({

@@ -1,4 +1,5 @@
 use rusqlite::{params, Connection};
+use std::collections::HashMap;
 use crate::error::AppResult;
 use crate::models::Tag;
 
@@ -23,6 +24,36 @@ pub fn list_for_task(conn: &Connection, task_id: i64) -> AppResult<Vec<Tag>> {
     )?;
     let rows = stmt.query_map(params![task_id], row_to_tag)?.collect::<Result<_, _>>()?;
     Ok(rows)
+}
+
+pub fn list_first_names_for_tasks(conn: &Connection, task_ids: &[i64]) -> AppResult<HashMap<i64, String>> {
+    if task_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+
+    let placeholders = std::iter::repeat("?")
+        .take(task_ids.len())
+        .collect::<Vec<_>>()
+        .join(",");
+    let sql = format!(
+        "SELECT tt.task_id, MIN(t.name) AS name
+         FROM task_tags tt
+         JOIN tags t ON t.id=tt.tag_id
+         WHERE tt.task_id IN ({})
+         GROUP BY tt.task_id",
+        placeholders,
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(rusqlite::params_from_iter(task_ids.iter()), |row| {
+        Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+    })?;
+
+    let mut tag_names = HashMap::new();
+    for row in rows {
+        let (task_id, name) = row?;
+        tag_names.insert(task_id, name);
+    }
+    Ok(tag_names)
 }
 
 pub fn attach(conn: &Connection, task_id: i64, tag_id: i64) -> AppResult<()> {
@@ -50,5 +81,22 @@ mod tests {
         assert_eq!(list_for_task(&conn, t.id).unwrap().len(), 1);
         detach(&conn, t.id, tag.id).unwrap();
         assert_eq!(list_for_task(&conn, t.id).unwrap().len(), 0);
+    }
+
+    #[test]
+    fn list_first_names_for_tasks_batches_tag_lookup() {
+        let conn = in_memory_for_test();
+        let p = projects::create(&conn, "P", None, None, None).unwrap();
+        let t1 = tasks::create(&conn, tasks::TaskInput { project_id: p.id, name: "A".into(), ..Default::default() }).unwrap();
+        let t2 = tasks::create(&conn, tasks::TaskInput { project_id: p.id, name: "B".into(), ..Default::default() }).unwrap();
+        let urgent = upsert(&conn, "urgent").unwrap();
+        let later = upsert(&conn, "later").unwrap();
+
+        attach(&conn, t1.id, urgent.id).unwrap();
+        attach(&conn, t2.id, later.id).unwrap();
+
+        let tags = list_first_names_for_tasks(&conn, &[t1.id, t2.id]).unwrap();
+        assert_eq!(tags.get(&t1.id).map(String::as_str), Some("urgent"));
+        assert_eq!(tags.get(&t2.id).map(String::as_str), Some("later"));
     }
 }

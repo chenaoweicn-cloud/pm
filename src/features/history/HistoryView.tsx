@@ -6,6 +6,7 @@ import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { todayIso, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange } from '@/lib/date'
 import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
 import { useCompletedInRange, useInProgressTasks } from '@/features/tasks/queries'
+import { useFirstTagNamesForTasks } from '@/features/tasks/tagQueries'
 import type { Task } from '@/lib/types'
 import { TaskForm } from '@/features/tasks/TaskForm'
 
@@ -92,6 +93,7 @@ export function HistoryView() {
 
   const completed = [...completedTasks].sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
   const inflight = inflightTasks
+  const { data: tagNames = {} } = useFirstTagNamesForTasks([...completed, ...inflight].map(task => task.id))
 
   const byDate: Record<string, Task[]> = {}
   for (const t of completed) {
@@ -255,7 +257,8 @@ export function HistoryView() {
                     showDate={false}
                     showProject
                     projectName={projects.find(project => project.id === t.projectId)?.name}
-                    projectColor={projects.find(project => project.id === t.projectId)?.color}
+                    projectColor={projects.find(project => project.id === t.projectId)?.color ?? '#6C6C6C'}
+                    tagName={tagNames[t.id]}
                     onEdit={setEditingTask}
                   />
                 ))}
@@ -276,7 +279,8 @@ export function HistoryView() {
                     task={t}
                     showProject
                     projectName={p.name}
-                    projectColor={p.color}
+                    projectColor={p.color ?? '#6C6C6C'}
+                    tagName={tagNames[t.id]}
                     onEdit={setEditingTask}
                   />
                 ))}

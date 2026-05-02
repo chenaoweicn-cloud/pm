@@ -50,6 +50,8 @@ export const inProgressTasks = (includeArchived: boolean) =>
 export const upsertTag = (name: string) => invoke<Tag>('upsert_tag', { name })
 export const listTags = () => invoke<Tag[]>('list_tags')
 export const listTagsForTask = (taskId: number) => invoke<Tag[]>('list_tags_for_task', { taskId })
+export const listFirstTagNamesForTasks = (taskIds: number[]) =>
+  invoke<Record<number, string>>('list_first_tag_names_for_tasks', { taskIds })
 export const attachTag = (taskId: number, tagId: number) => invoke<void>('attach_tag', { taskId, tagId })
 export const detachTag = (taskId: number, tagId: number) => invoke<void>('detach_tag', { taskId, tagId })
 

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/lib/api'
+import { taskKeys } from '@/features/tasks/queries'
 
 export const projectKeys = {
   all: ['projects'] as const,
@@ -14,8 +15,8 @@ export const useActiveProjects = () =>
 export const useArchivedProjects = () =>
   useQuery({ queryKey: projectKeys.archived(), queryFn: api.listArchivedProjects })
 
-export const useProject = (id: number | null) =>
-  useQuery({ queryKey: projectKeys.detail(id!), queryFn: () => api.getProject(id!), enabled: id != null })
+export const useProject = (id: number | null, enabled = true) =>
+  useQuery({ queryKey: projectKeys.detail(id!), queryFn: () => api.getProject(id!), enabled: enabled && id != null })
 
 export function useCreateProject() {
   const qc = useQueryClient()
@@ -37,7 +38,10 @@ export function useArchiveProject() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: api.archiveProject,
-    onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: projectKeys.all })
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+    },
   })
 }
 
@@ -45,7 +49,10 @@ export function useUnarchiveProject() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: api.unarchiveProject,
-    onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: projectKeys.all })
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+    },
   })
 }
 
@@ -53,6 +60,9 @@ export function useSoftDeleteProject() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: api.softDeleteProject,
-    onSuccess: () => qc.invalidateQueries({ queryKey: projectKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: projectKeys.all })
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+    },
   })
 }

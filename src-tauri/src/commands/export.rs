@@ -37,7 +37,7 @@ pub fn export_json(db: State<'_, DbState>, output_path: String, project_id: Opti
         None => {
             let mut ps = projects::list_active(&conn)?;
             ps.extend(projects::list_archived(&conn)?);
-            let ts = tasks::list_all_active(&conn)?;
+            let ts = tasks::list_all_non_deleted(&conn)?;
             (ps, ts)
         }
     };
