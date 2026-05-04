@@ -2,6 +2,7 @@ import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { GroupCard } from '@/components/ui/GroupCard'
 import { todayIso, relDate } from '@/lib/date'
+import { projectColorFor } from '@/lib/projectColor'
 import type { Project, Task } from '@/lib/types'
 
 interface Props {
@@ -14,6 +15,7 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 
 export function ProjectTimelinePanel({ project, tasks, onEditTask }: Props) {
   const today = todayIso()
+  const projectColor = projectColorFor(project)
   const dated = tasks.filter(t => t.dueDate || t.startDate)
   const allDates = dated.flatMap(t => [t.startDate, t.dueDate].filter(Boolean) as string[])
   const minDate = allDates.length > 0 ? allDates.reduce((a, b) => (a < b ? a : b)) : today
@@ -106,7 +108,7 @@ export function ProjectTimelinePanel({ project, tasks, onEditTask }: Props) {
                 cursor: onEditTask ? 'pointer' : 'default',
               }}
             >
-              <Checkbox status={t.status} color={project.color ?? '#6C6C6C'} />
+              <Checkbox status={t.status} color={projectColor} />
               <span
                 style={{
                   whiteSpace: 'nowrap',
@@ -146,14 +148,14 @@ export function ProjectTimelinePanel({ project, tasks, onEditTask }: Props) {
                     top: 9,
                     height: 18,
                     width: w,
-                    background: done ? `${project.color}30` : project.color,
+                    background: done ? `${projectColor}30` : projectColor,
                     borderRadius: 5,
                     display: 'flex',
                     alignItems: 'center',
                     paddingLeft: 8,
                     fontSize: 10,
                     fontWeight: 600,
-                    color: done ? project.color : '#fff',
+                    color: done ? projectColor : '#fff',
                   }}
                 >
                   {relDate(t.dueDate ?? undefined)}

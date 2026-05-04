@@ -4,6 +4,7 @@ import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { todayIso, formatDate, relDate, isoDate, thisWeekRange, thisMonthRange } from '@/lib/date'
+import { projectColorFor } from '@/lib/projectColor'
 import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
 import { useCompletedInRange, useInProgressTasks } from '@/features/tasks/queries'
 import { useFirstTagNamesForTasks } from '@/features/tasks/tagQueries'
@@ -257,7 +258,7 @@ export function HistoryView() {
                     showDate={false}
                     showProject
                     projectName={projects.find(project => project.id === t.projectId)?.name}
-                    projectColor={projects.find(project => project.id === t.projectId)?.color ?? '#6C6C6C'}
+                    projectColor={projectColorFor(projects.find(project => project.id === t.projectId))}
                     tagName={tagNames[t.id]}
                     onEdit={setEditingTask}
                   />
@@ -272,14 +273,14 @@ export function HistoryView() {
             if (!p) return null
             return (
               <GroupCard key={pid}>
-                <GroupHeader color={p.color} title={p.name} type={p.type ?? undefined} count={list.length} />
+                <GroupHeader color={projectColorFor(p)} title={p.name} type={p.type ?? undefined} count={list.length} />
                 {list.map(t => (
                   <Row
                     key={t.id}
                     task={t}
                     showProject
                     projectName={p.name}
-                    projectColor={p.color ?? '#6C6C6C'}
+                    projectColor={projectColorFor(p)}
                     tagName={tagNames[t.id]}
                     onEdit={setEditingTask}
                   />

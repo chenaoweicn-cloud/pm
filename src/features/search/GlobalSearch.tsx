@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
+import { projectColorFor } from '@/lib/projectColor'
 import { SEARCH_MIN_CHARS, useSearch } from '@/features/search/queries'
 import { useActiveProjects, useArchivedProjects } from '@/features/projects/queries'
 import type { Project, Task } from '@/lib/types'
@@ -187,7 +188,7 @@ export function GlobalSearch({ onClose, onOpenProject }: Props) {
                     cursor: 'pointer',
                   }}
                 >
-                  <span style={{ width: 14, height: 14, borderRadius: 4, background: p.color ?? '#6C6C6C' }} />
+                  <span style={{ width: 14, height: 14, borderRadius: 4, background: projectColorFor(p) }} />
                   <span style={{ fontSize: 13, color: S.fg, fontWeight: 500 }}>{p.name}</span>
                   <span style={{ marginLeft: 'auto', fontSize: 11, color: S.fgMuted }}>
                     {p.taskCount} 任务
@@ -221,7 +222,7 @@ export function GlobalSearch({ onClose, onOpenProject }: Props) {
                   cursor: 'pointer',
                 }}
               >
-                <Checkbox status={t.status} color={p?.color ?? '#6C6C6C'} />
+                <Checkbox status={t.status} color={projectColorFor(p)} />
                 <span
                   style={{
                     flex: 1,
@@ -244,7 +245,7 @@ export function GlobalSearch({ onClose, onOpenProject }: Props) {
                     color: S.fgMuted,
                   }}
                 >
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p?.color ?? '#6C6C6C' }} />
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: projectColorFor(p) }} />
                   {(p?.name ?? '未知项目').split('·')[0].trim()}
                 </span>
               </div>

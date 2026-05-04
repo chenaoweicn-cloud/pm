@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { GroupCard, GroupHeader } from '@/components/ui/GroupCard'
 import { Row } from '@/components/ui/Row'
+import { projectColorFor } from '@/lib/projectColor'
 import { useAllActiveTasks } from '@/features/tasks/queries'
 import { useActiveProjects } from '@/features/projects/queries'
 import { useFirstTagNamesForTasks } from '@/features/tasks/tagQueries'
@@ -53,7 +54,7 @@ export function CrossView() {
               task={t}
               showProject
               projectName={project?.name}
-              projectColor={project?.color ?? '#6C6C6C'}
+              projectColor={project ? projectColorFor(project) : undefined}
               tagName={tagNames[t.id]}
               onEdit={setEditingTask}
             />

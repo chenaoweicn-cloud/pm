@@ -4,6 +4,7 @@ import { Stat } from '@/components/ui/Stat'
 import { Row } from '@/components/ui/Row'
 import { GroupCard } from '@/components/ui/GroupCard'
 import { todayIso, formatDate } from '@/lib/date'
+import { projectColorFor } from '@/lib/projectColor'
 import { useActiveProjects } from '@/features/projects/queries'
 import { useTodayTasks } from '@/features/tasks/queries'
 import { useFirstTagNamesForTasks } from '@/features/tasks/tagQueries'
@@ -86,7 +87,7 @@ export function TodayView() {
                   width: 10,
                   height: 10,
                   borderRadius: '50%',
-                  background: project.color ?? '#6C6C6C',
+                  background: projectColorFor(project),
                   flexShrink: 0,
                 }}
               />
@@ -130,7 +131,7 @@ export function TodayView() {
               <Row
                 key={t.id}
                 task={t}
-                projectColor={project.color ?? '#6C6C6C'}
+                projectColor={projectColorFor(project)}
                 tagName={tagNames[t.id]}
                 onEdit={setEditingTask}
               />

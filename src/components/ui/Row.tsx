@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { todayIso, relDate } from '@/lib/date'
+import { projectColorFor, projectColorForId } from '@/lib/projectColor'
 import { useProject } from '@/features/projects/queries'
 import { useSetTaskStatus, useSoftDeleteTask } from '@/features/tasks/queries'
 import type { Task, TaskStatus } from '@/lib/types'
@@ -43,7 +44,7 @@ export function Row({
   const overdue = task.dueDate != null && task.dueDate < todayStr && !isDone
   const today = task.dueDate === todayStr
   const tag = tagName ?? task.tags?.[0]
-  const color = projectColor ?? p?.color ?? '#6C6C6C'
+  const color = projectColor ?? (p ? projectColorFor(p) : projectColorForId(task.projectId))
   const effectiveProjectName = projectName ?? p?.name
 
   return (

@@ -9,6 +9,7 @@ import {
 } from '@/features/projects/queries'
 import { useAllActiveTasks, useTodayTasks } from '@/features/tasks/queries'
 import { todayIso } from '@/lib/date'
+import { projectColorFor } from '@/lib/projectColor'
 import type { ViewKey } from './AppShell'
 
 interface Props {
@@ -113,6 +114,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
       <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap, overflow: 'auto', flex: 1 }}>
         {projects.map(p => {
           const sel = view === 'project' && projectId === p.id
+          const color = projectColorFor(p)
           return (
             <div
               key={p.id}
@@ -128,7 +130,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
               }}
             >
               <span
-                style={{ width: 8, height: 8, borderRadius: '50%', background: p.color ?? '#6C6C6C', flexShrink: 0 }}
+                style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }}
               />
               <span
                 style={{
@@ -239,7 +241,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
                       width: 8,
                       height: 8,
                       borderRadius: '50%',
-                      background: p.color ?? '#6C6C6C',
+                      background: projectColorFor(p),
                       flexShrink: 0,
                       opacity: 0.5,
                     }}

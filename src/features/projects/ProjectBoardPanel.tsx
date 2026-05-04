@@ -2,6 +2,7 @@ import { S } from '@/design/tokens'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { GroupHeader } from '@/components/ui/GroupCard'
 import { relDate } from '@/lib/date'
+import { projectColorFor } from '@/lib/projectColor'
 import type { Project, Task, TaskStatus } from '@/lib/types'
 import { useSetTaskStatus } from '@/features/tasks/queries'
 
@@ -19,6 +20,7 @@ const COLS: { key: TaskStatus; name: string }[] = [
 
 export function ProjectBoardPanel({ project, tasks, onEditTask }: Props) {
   const setStatus = useSetTaskStatus()
+  const projectColor = projectColorFor(project)
 
   const moveTask = (task: Task, status: TaskStatus) => {
     if (task.status === status || setStatus.isPending) return
@@ -64,7 +66,7 @@ export function ProjectBoardPanel({ project, tasks, onEditTask }: Props) {
                       marginBottom: 4,
                     }}
                   >
-                    <Checkbox status={t.status} color={project.color ?? '#6C6C6C'} />
+                    <Checkbox status={t.status} color={projectColor} />
                     {t.priority === 'high' && (
                       <span style={{ width: 3, height: 11, borderRadius: 1.5, background: S.warn }} />
                     )}

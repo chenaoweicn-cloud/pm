@@ -30,6 +30,7 @@ pub fn restore_task(conn: &Connection, id: i64) -> AppResult<()> {
 }
 
 pub fn purge_project(conn: &Connection, id: i64) -> AppResult<()> {
+    conn.execute("DELETE FROM tasks WHERE project_id=?1 AND parent_task_id IS NOT NULL", params![id])?;
     conn.execute("DELETE FROM tasks WHERE project_id=?1", params![id])?;
     conn.execute("DELETE FROM project_relations WHERE from_project_id=?1 OR to_project_id=?1", params![id])?;
     conn.execute("DELETE FROM task_groups WHERE project_id=?1", params![id])?;
@@ -77,5 +78,37 @@ mod tests {
 
         assert!(tasks::get(&conn, child.id).is_err());
         assert!(tasks::get(&conn, root.id).is_err());
+    }
+
+    #[test]
+    fn purge_project_deletes_child_tasks_before_project() {
+        let conn = in_memory_for_test();
+        let project = projects::create(&conn, "P", None, None, None).unwrap();
+        let root = tasks::create(
+            &conn,
+            tasks::TaskInput {
+                project_id: project.id,
+                name: "R".into(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let child = tasks::create(
+            &conn,
+            tasks::TaskInput {
+                project_id: project.id,
+                name: "C".into(),
+                parent_task_id: Some(root.id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        crate::db::projects::soft_delete(&conn, project.id).unwrap();
+        purge_project(&conn, project.id).unwrap();
+
+        assert!(tasks::get(&conn, child.id).is_err());
+        assert!(tasks::get(&conn, root.id).is_err());
+        assert!(crate::db::projects::get(&conn, project.id).is_err());
     }
 }

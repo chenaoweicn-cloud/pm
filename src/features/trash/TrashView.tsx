@@ -1,5 +1,10 @@
+import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { useTrash, useRestoreProject, useRestoreTask, usePurgeProject, usePurgeTask } from './queries'
+
+type PendingPurge =
+  | { kind: 'project'; id: number; name: string }
+  | { kind: 'task'; id: number; name: string }
 
 export function TrashView() {
   const { data, isLoading } = useTrash()
@@ -7,6 +12,7 @@ export function TrashView() {
   const restoreTask = useRestoreTask()
   const purgeProject = usePurgeProject()
   const purgeTask = usePurgeTask()
+  const [pendingPurge, setPendingPurge] = useState<PendingPurge | null>(null)
 
   const projects = data?.projects ?? []
   const tasks = data?.tasks ?? []
@@ -14,6 +20,19 @@ export function TrashView() {
 
   const projectsAnyPending = restoreProject.isPending || purgeProject.isPending
   const tasksAnyPending = restoreTask.isPending || purgeTask.isPending
+  const isPurging = purgeProject.isPending || purgeTask.isPending
+
+  const confirmPurge = () => {
+    if (!pendingPurge || isPurging) return
+
+    const mutation = pendingPurge.kind === 'project' ? purgeProject : purgeTask
+    mutation.mutate(pendingPurge.id, {
+      onSuccess: () => setPendingPurge(null),
+      onError: error => {
+        window.alert(`彻底删除失败：${String(error)}`)
+      },
+    })
+  }
 
   if (isLoading) {
     return (
@@ -111,11 +130,7 @@ export function TrashView() {
                     </button>
                     <button
                       disabled={projectsAnyPending}
-                      onClick={() => {
-                        if (window.confirm('彻底删除？将无法恢复。')) {
-                          purgeProject.mutate(p.id)
-                        }
-                      }}
+                      onClick={() => setPendingPurge({ kind: 'project', id: p.id, name: p.name })}
                       style={{
                         border: '1px solid currentColor',
                         borderRadius: 6,
@@ -183,11 +198,7 @@ export function TrashView() {
                     </button>
                     <button
                       disabled={tasksAnyPending}
-                      onClick={() => {
-                        if (window.confirm('彻底删除？将无法恢复。')) {
-                          purgeTask.mutate(t.id)
-                        }
-                      }}
+                      onClick={() => setPendingPurge({ kind: 'task', id: t.id, name: t.name })}
                       style={{
                         border: '1px solid currentColor',
                         borderRadius: 6,
@@ -207,6 +218,85 @@ export function TrashView() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {pendingPurge && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="purge-title"
+          onClick={() => {
+            if (!isPurging) setPendingPurge(null)
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(0,0,0,0.22)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: 360,
+              maxWidth: '90vw',
+              background: S.cardBg,
+              border: S.cardBorder,
+              borderRadius: S.cardRadius,
+              boxShadow: '0 14px 40px rgba(0,0,0,0.18)',
+              padding: 18,
+            }}
+          >
+            <div id="purge-title" style={{ fontSize: 15, fontWeight: 700, color: S.fg }}>
+              彻底删除{pendingPurge.kind === 'project' ? '项目' : '任务'}
+            </div>
+            <div style={{ fontSize: 13, color: S.fgMuted, lineHeight: 1.6, marginTop: 8 }}>
+              确定彻底删除“{pendingPurge.name}”？此操作无法恢复。
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+              <button
+                type="button"
+                disabled={isPurging}
+                onClick={() => setPendingPurge(null)}
+                style={{
+                  background: 'transparent',
+                  border: S.hairline,
+                  borderRadius: S.inputRadius,
+                  color: S.fgMuted,
+                  cursor: isPurging ? 'not-allowed' : 'pointer',
+                  fontFamily: S.font,
+                  fontSize: 13,
+                  padding: '7px 12px',
+                  opacity: isPurging ? 0.6 : 1,
+                }}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                disabled={isPurging}
+                onClick={confirmPurge}
+                style={{
+                  background: S.warn,
+                  border: 'none',
+                  borderRadius: S.inputRadius,
+                  color: '#fff',
+                  cursor: isPurging ? 'not-allowed' : 'pointer',
+                  fontFamily: S.font,
+                  fontSize: 13,
+                  padding: '7px 14px',
+                  opacity: isPurging ? 0.7 : 1,
+                }}
+              >
+                {isPurging ? '删除中…' : '确认彻底删除'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

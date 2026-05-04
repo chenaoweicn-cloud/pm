@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { S } from '@/design/tokens'
 import { Stat } from '@/components/ui/Stat'
 import type { Task } from '@/lib/types'
+import { projectColorFor } from '@/lib/projectColor'
 import { useProject } from '@/features/projects/queries'
 import { useTasksForProject } from '@/features/tasks/queries'
 import { TaskForm } from '@/features/tasks/TaskForm'
@@ -30,6 +31,7 @@ export function ProjectDetail({ projectId }: Props) {
   const { data: tasks = [] } = useTasksForProject(projectId)
 
   if (!p) return null
+  const projectColor = projectColorFor(p)
 
   const segmented = (
     <div
@@ -68,10 +70,10 @@ export function ProjectDetail({ projectId }: Props) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: S.contentPad, paddingBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? '#6C6C6C' }} />
+        {p.type && (
           <span
             style={{
+              display: 'block',
               fontSize: 10,
               fontWeight: 600,
               color: S.fgMuted,
@@ -81,7 +83,7 @@ export function ProjectDetail({ projectId }: Props) {
           >
             {p.type}
           </span>
-        </div>
+        )}
         <div
           style={{
             fontSize: S.heroSize,
@@ -124,7 +126,7 @@ export function ProjectDetail({ projectId }: Props) {
       </div>
 
       <div style={{ flex: 1, overflow: 'auto', padding: '0 36px 36px' }}>
-        {mode === 'list' && <ProjectListPanel tasks={tasks} projectColor={p.color ?? '#6C6C6C'} onEditTask={setEditingTask} />}
+        {mode === 'list' && <ProjectListPanel tasks={tasks} projectColor={projectColor} onEditTask={setEditingTask} />}
         {mode === 'board' && <ProjectBoardPanel project={p} tasks={tasks} onEditTask={setEditingTask} />}
         {mode === 'timeline' && <ProjectTimelinePanel project={p} tasks={tasks} onEditTask={setEditingTask} />}
       </div>
