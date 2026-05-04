@@ -26,6 +26,12 @@ interface NavItem {
   onClick?: () => void
 }
 
+interface PendingDeleteProject {
+  id: number
+  name: string
+  selected: boolean
+}
+
 export function Sidebar({ view, projectId, setView, openSearch, openProjectForm }: Props) {
   const today = todayIso()
   const { data: allTasks = [] } = useAllActiveTasks()
@@ -36,6 +42,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
   const softDelete = useSoftDeleteProject()
   const unarchive = useUnarchiveProject()
   const [showArchived, setShowArchived] = useState(false)
+  const [pendingDeleteProject, setPendingDeleteProject] = useState<PendingDeleteProject | null>(null)
 
   const counts = {
     today: todayTasksList.length,
@@ -163,14 +170,9 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
                 aria-label={`删除项目 ${p.name}`}
                 title="删除项目"
                 onClick={e => {
+                  e.preventDefault()
                   e.stopPropagation()
-                  if (window.confirm('确定删除该项目？删除后可在回收站恢复。')) {
-                    softDelete.mutate(p.id, {
-                      onSuccess: () => {
-                        if (sel) setView('today')
-                      },
-                    })
-                  }
+                  setPendingDeleteProject({ id: p.id, name: p.name, selected: sel })
                 }}
                 style={{
                   ...itemActionStyle('warn'),
@@ -317,6 +319,96 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
         </svg>
         新建项目
       </div>
+
+      {pendingDeleteProject && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-project-title"
+          onClick={() => {
+            if (!softDelete.isPending) setPendingDeleteProject(null)
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(0,0,0,0.22)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: 340,
+              maxWidth: '90vw',
+              background: S.cardBg,
+              border: S.cardBorder,
+              borderRadius: S.cardRadius,
+              boxShadow: '0 14px 40px rgba(0,0,0,0.18)',
+              padding: 18,
+            }}
+          >
+            <div id="delete-project-title" style={{ fontSize: 15, fontWeight: 700, color: S.fg }}>
+              删除项目
+            </div>
+            <div style={{ fontSize: 13, color: S.fgMuted, lineHeight: 1.6, marginTop: 8 }}>
+              确定删除“{pendingDeleteProject.name}”？删除后可在回收站恢复。
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+              <button
+                type="button"
+                disabled={softDelete.isPending}
+                onClick={() => setPendingDeleteProject(null)}
+                style={{
+                  background: 'transparent',
+                  border: S.hairline,
+                  borderRadius: S.inputRadius,
+                  color: S.fgMuted,
+                  cursor: softDelete.isPending ? 'not-allowed' : 'pointer',
+                  fontFamily: S.font,
+                  fontSize: 13,
+                  padding: '7px 12px',
+                  opacity: softDelete.isPending ? 0.6 : 1,
+                }}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                disabled={softDelete.isPending}
+                onClick={() => {
+                  const target = pendingDeleteProject
+                  softDelete.mutate(target.id, {
+                    onSuccess: () => {
+                      setPendingDeleteProject(null)
+                      if (target.selected) setView('today')
+                    },
+                    onError: error => {
+                      window.alert(`删除项目失败：${String(error)}`)
+                    },
+                  })
+                }}
+                style={{
+                  background: S.warn,
+                  border: 'none',
+                  borderRadius: S.inputRadius,
+                  color: '#fff',
+                  cursor: softDelete.isPending ? 'not-allowed' : 'pointer',
+                  fontFamily: S.font,
+                  fontSize: 13,
+                  padding: '7px 14px',
+                  opacity: softDelete.isPending ? 0.7 : 1,
+                }}
+              >
+                {softDelete.isPending ? '删除中…' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
