@@ -4,6 +4,7 @@ import type {
   Project, Task, TaskGroup, Tag, TaskAttachment, ProjectRelation,
   TaskInputDto, SearchResults, TrashItems,
   TaskStatus, RelationType, AttachmentType,
+  AiCaptureResult, AiInboxItem, AiInboxStatus, AiModel, SaveAiModelInput,
 } from './types'
 
 // Projects
@@ -83,3 +84,19 @@ export const exportMarkdown = (args: { outputPath: string; start?: string | null
 
 // Notifications
 export const checkNotificationsNow = () => invoke<void>('check_notifications_now')
+
+// AI Models
+export const listAiModels = () => invoke<AiModel[]>('list_ai_models')
+export const getActiveAiModel = () => invoke<AiModel | null>('get_active_ai_model')
+export const saveAiModel = (input: SaveAiModelInput) => invoke<AiModel>('save_ai_model', { input })
+export const deleteAiModel = (id: number) => invoke<void>('delete_ai_model', { id })
+export const setActiveAiModel = (id: number) => invoke<void>('set_active_ai_model', { id })
+
+// AI Inbox
+export const aiCaptureTasks = (text: string) => invoke<AiCaptureResult>('ai_capture_tasks', { text })
+export const listAiInboxItems = (status?: AiInboxStatus | null) =>
+  invoke<AiInboxItem[]>('list_ai_inbox_items', { status: status ?? null })
+export const countPendingAiInboxItems = () => invoke<number>('count_pending_ai_inbox_items')
+export const convertAiInboxItem = (id: number, input: TaskInputDto) =>
+  invoke<Task>('convert_ai_inbox_item', { id, input })
+export const dismissAiInboxItem = (id: number) => invoke<void>('dismiss_ai_inbox_item', { id })

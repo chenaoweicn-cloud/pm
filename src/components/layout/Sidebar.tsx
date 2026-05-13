@@ -8,9 +8,11 @@ import {
   useUnarchiveProject,
 } from '@/features/projects/queries'
 import { useAllActiveTasks, useTodayTasks } from '@/features/tasks/queries'
+import { usePendingAiInboxCount } from '@/features/ai/queries'
 import { todayIso } from '@/lib/date'
 import { projectColorFor } from '@/lib/projectColor'
 import type { ViewKey } from './AppShell'
+import type { SettingsSection } from '@/features/settings/SettingsView'
 
 interface Props {
   view: ViewKey
@@ -18,6 +20,8 @@ interface Props {
   setView: (view: ViewKey, projectId?: number) => void
   openSearch: () => void
   openProjectForm: () => void
+  settingsSection: SettingsSection
+  setSettingsSection: (section: SettingsSection) => void
 }
 
 interface NavItem {
@@ -33,11 +37,20 @@ interface PendingDeleteProject {
   selected: boolean
 }
 
-export function Sidebar({ view, projectId, setView, openSearch, openProjectForm }: Props) {
+export function Sidebar({
+  view,
+  projectId,
+  setView,
+  openSearch,
+  openProjectForm,
+  settingsSection,
+  setSettingsSection,
+}: Props) {
   const today = todayIso()
   const { data: allTasks = [] } = useAllActiveTasks()
   const { data: todayTasksList = [] } = useTodayTasks(today)
   const { data: projects = [] } = useActiveProjects()
+  const { data: pendingAiInboxCount = 0 } = usePendingAiInboxCount()
   const { data: archivedProjects = [], isLoading: archivedLoading } = useArchivedProjects()
   const archive = useArchiveProject()
   const softDelete = useSoftDeleteProject()
@@ -55,6 +68,7 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
     { key: 'cross', label: '跨项目任务', badge: counts.cross },
     { key: 'history', label: '历史回顾' },
     { key: 'search', label: '搜索…', onClick: openSearch },
+    { key: 'ai-inbox', label: '暂存任务', badge: pendingAiInboxCount },
     { key: 'trash', label: '回收站' },
   ]
 
@@ -70,6 +84,80 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
     fontFamily: S.font,
     flexShrink: 0,
   } as const)
+
+  if (view === 'settings') {
+    const settingsItems: Array<{ key: SettingsSection; label: string; hint: string }> = [
+      { key: 'ai', label: 'AI 设置', hint: '模型与 API Key' },
+      { key: 'backup', label: '数据备份', hint: '本地数据库备份' },
+      { key: 'export', label: '数据导出', hint: 'JSON 与 Markdown' },
+      { key: 'paths', label: '输出路径', hint: '导出文件位置' },
+    ]
+
+    return (
+      <div
+        style={{
+          width: S.sidebarWidth,
+          flexShrink: 0,
+          background: S.sidebarBg,
+          borderRight: S.sidebarBorder,
+          padding: S.sidebarPad,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'auto',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setView('today')}
+          style={{
+            ...S.navItem,
+            border: 'none',
+            background: 'transparent',
+            color: S.fgMuted,
+            fontFamily: S.font,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            textAlign: 'left',
+            marginTop: 10,
+          }}
+        >
+          ← 返回
+        </button>
+
+        <div style={{ ...S.sectionLabel, marginTop: 10 }}>设置</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: S.navGap }}>
+          {settingsItems.map(item => {
+            const selected = settingsSection === item.key
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setSettingsSection(item.key)}
+                style={{
+                  ...S.navItem,
+                  border: 'none',
+                  background: selected ? S.navActiveBg : 'transparent',
+                  color: selected ? S.navActiveFg : S.fgMuted,
+                  fontFamily: S.font,
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: selected ? 700 : 600 }}>{item.label}</span>
+                <span style={{ fontSize: 11, color: selected ? S.navActiveFg : S.fgMuted, opacity: selected ? 0.82 : 0.72 }}>
+                  {item.hint}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -290,9 +378,9 @@ export function Sidebar({ view, projectId, setView, openSearch, openProjectForm 
         onClick={() => setView('settings')}
         style={{
           ...S.navItem,
-          background: view === 'settings' ? S.navActiveBg : 'transparent',
-          color: view === 'settings' ? S.navActiveFg : S.fgMuted,
-          fontWeight: view === 'settings' ? 600 : 500,
+          background: 'transparent',
+          color: S.fgMuted,
+          fontWeight: 500,
           display: 'flex',
           alignItems: 'center',
           gap: 6,

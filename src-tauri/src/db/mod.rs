@@ -1,23 +1,25 @@
+pub mod ai_inbox;
+pub mod ai_models;
 pub mod attachments;
 pub mod migrations;
-pub mod search;
 pub mod project_relations;
 pub mod projects;
+pub mod search;
 pub mod tags;
 pub mod task_groups;
 pub mod tasks;
 pub mod trash;
 
+use crate::error::AppResult;
 use rusqlite::Connection;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use crate::error::AppResult;
 
 pub struct DbState(pub Mutex<Connection>);
 
 pub fn resolve_db_path() -> PathBuf {
-    let base = directories::ProjectDirs::from("com", "pm", "pm")
-        .expect("cannot resolve project dirs");
+    let base =
+        directories::ProjectDirs::from("com", "pm", "pm").expect("cannot resolve project dirs");
     let dir = base.data_dir().to_path_buf();
     std::fs::create_dir_all(&dir).ok();
     dir.join("pm.db")

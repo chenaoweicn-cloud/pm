@@ -11,11 +11,13 @@ import { GlobalSearch } from '@/features/search/GlobalSearch'
 import { TaskForm } from '@/features/tasks/TaskForm'
 import { ProjectForm } from '@/features/projects/ProjectForm'
 import { TrashView } from '@/features/trash/TrashView'
-import { SettingsView } from '@/features/settings/SettingsView'
+import { SettingsView, type SettingsSection } from '@/features/settings/SettingsView'
+import { AiInboxView } from '@/features/ai/AiInboxView'
+import { AiQuickInbox } from '@/features/ai/AiQuickInbox'
 import { Sidebar } from './Sidebar'
 import { Toolbar } from './Toolbar'
 
-export type ViewKey = 'today' | 'cross' | 'history' | 'project' | 'trash' | 'settings'
+export type ViewKey = 'today' | 'cross' | 'history' | 'project' | 'ai-inbox' | 'trash' | 'settings'
 
 export function AppShell() {
   const [view, setViewRaw] = useState<ViewKey>('today')
@@ -24,6 +26,8 @@ export function AppShell() {
   const [taskFormOpen, setTaskFormOpen] = useState(false)
   const [taskFormProjectId, setTaskFormProjectId] = useState<number | null>(null)
   const [projectFormOpen, setProjectFormOpen] = useState(false)
+  const [aiInboxOpen, setAiInboxOpen] = useState(false)
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>('ai')
 
   const today = todayIso()
   const { data: allTasks = [] } = useAllActiveTasks()
@@ -34,6 +38,7 @@ export function AppShell() {
     setViewRaw(v)
     if (pid != null) setProjectId(pid)
     setTaskFormProjectId(v === 'project' ? (pid ?? projectId) : null)
+    if (v === 'settings') setSettingsSection('ai')
   }
 
   const openProjectFromSearch = (pid: number) => {
@@ -50,6 +55,10 @@ export function AppShell() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault()
         setTaskFormOpen(true)
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+        e.preventDefault()
+        setAiInboxOpen(true)
       }
       if (e.key === 'Escape') setSearchOpen(false)
     }
@@ -77,8 +86,12 @@ export function AppShell() {
     body = <TrashView />
     title = '回收站'
     count = null
+  } else if (view === 'ai-inbox') {
+    body = <AiInboxView />
+    title = '暂存任务'
+    count = null
   } else if (view === 'settings') {
-    body = <SettingsView />
+    body = <SettingsView section={settingsSection} />
     title = '设置'
     count = null
   } else {
@@ -107,12 +120,15 @@ export function AppShell() {
         setView={setView}
         openSearch={() => setSearchOpen(true)}
         openProjectForm={() => setProjectFormOpen(true)}
+        settingsSection={settingsSection}
+        setSettingsSection={setSettingsSection}
       />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
         <Toolbar
           title={title}
           count={count}
           openSearch={() => setSearchOpen(true)}
+          openAiInbox={() => setAiInboxOpen(true)}
           right={view === 'project' ? (
             <button
               onClick={() => setTaskFormOpen(true)}
@@ -144,6 +160,19 @@ export function AppShell() {
       )}
       {taskFormOpen && <TaskForm projectId={taskFormProjectId} onClose={() => setTaskFormOpen(false)} />}
       {projectFormOpen && <ProjectForm onClose={() => setProjectFormOpen(false)} />}
+      {aiInboxOpen && (
+        <AiQuickInbox
+          onClose={() => setAiInboxOpen(false)}
+          onOpenSettings={() => {
+            setAiInboxOpen(false)
+            setView('settings')
+          }}
+          onOpenInbox={() => {
+            setAiInboxOpen(false)
+            setView('ai-inbox')
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
-use rusqlite::Connection;
 use crate::error::AppResult;
+use rusqlite::Connection;
 
 pub const SCHEMA_V1: &str = r#"
 CREATE TABLE IF NOT EXISTS projects (
@@ -77,6 +77,45 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status        ON tasks(status)         WHER
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date      ON tasks(due_date)       WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_tasks_completed_at  ON tasks(completed_at)   WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_projects_status     ON projects(status)      WHERE deleted_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS ai_models (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  display_name  TEXT NOT NULL,
+  base_url      TEXT NOT NULL,
+  model_name    TEXT NOT NULL,
+  key_ref       TEXT NOT NULL UNIQUE,
+  is_active     INTEGER NOT NULL DEFAULT 0 CHECK(is_active IN (0, 1)),
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS ai_inbox_items (
+  id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+  raw_input             TEXT NOT NULL,
+  parsed_name           TEXT NOT NULL,
+  parsed_description    TEXT,
+  priority              TEXT CHECK(priority IN ('high','medium','low')),
+  start_date            TEXT,
+  due_date              TEXT,
+  project_candidate_id  INTEGER REFERENCES projects(id),
+  confidence            REAL NOT NULL DEFAULT 0,
+  status                TEXT NOT NULL DEFAULT 'pending'
+                          CHECK(status IN ('pending','converted','dismissed')),
+  model_id              INTEGER REFERENCES ai_models(id),
+  created_task_id       INTEGER REFERENCES tasks(id),
+  created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at            TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_models_active
+  ON ai_models(is_active);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_models_one_active
+  ON ai_models(is_active)
+  WHERE is_active = 1;
+
+CREATE INDEX IF NOT EXISTS idx_ai_inbox_status
+  ON ai_inbox_items(status, created_at);
 "#;
 
 pub fn run_migrations(conn: &Connection) -> AppResult<()> {
@@ -110,5 +149,32 @@ mod tests {
         assert!(tables.contains(&"tags".to_string()));
         assert!(tables.contains(&"task_tags".to_string()));
         assert!(tables.contains(&"task_attachments".to_string()));
+        assert!(tables.contains(&"ai_models".to_string()));
+        assert!(tables.contains(&"ai_inbox_items".to_string()));
+    }
+
+    #[test]
+    fn migrations_are_idempotent_for_ai_tables() {
+        let conn = Connection::open_in_memory().unwrap();
+        run_migrations(&conn).unwrap();
+        run_migrations(&conn).unwrap();
+
+        let ai_models: i64 = conn
+            .query_row(
+                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='ai_models'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        let ai_inbox_items: i64 = conn
+            .query_row(
+                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='ai_inbox_items'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+
+        assert_eq!(ai_models, 1);
+        assert_eq!(ai_inbox_items, 1);
     }
 }

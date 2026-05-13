@@ -98,6 +98,16 @@ pub fn run() {
       commands::export::export_json,
       commands::export::export_markdown,
       commands::notifications::check_notifications_now,
+      commands::ai::list_ai_models,
+      commands::ai::get_active_ai_model,
+      commands::ai::save_ai_model,
+      commands::ai::delete_ai_model,
+      commands::ai::set_active_ai_model,
+      commands::ai::ai_capture_tasks,
+      commands::ai::list_ai_inbox_items,
+      commands::ai::count_pending_ai_inbox_items,
+      commands::ai::convert_ai_inbox_item,
+      commands::ai::dismiss_ai_inbox_item,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -6,6 +6,7 @@ export type TaskStatus = 'not_started' | 'in_progress' | 'done'
 export type Priority = 'high' | 'medium' | 'low'
 export type RelationType = 'successor' | 'related'
 export type AttachmentType = 'link' | 'file'
+export type AiInboxStatus = 'pending' | 'converted' | 'dismissed'
 
 export interface Project {
   id: number
@@ -96,4 +97,48 @@ export interface SearchResults {
 export interface TrashItems {
   projects: Project[]
   tasks: Task[]
+}
+
+export interface AiModel {
+  id: number
+  displayName: string
+  baseUrl: string
+  modelName: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SaveAiModelInput {
+  id?: number | null
+  displayName: string
+  baseUrl: string
+  modelName: string
+  apiKey?: string | null
+}
+
+export interface AiInboxItem {
+  id: number
+  rawInput: string
+  parsedName: string
+  parsedDescription: string | null
+  priority: Priority | null
+  startDate: string | null
+  dueDate: string | null
+  projectCandidateId: number | null
+  confidence: number
+  status: AiInboxStatus
+  modelId: number | null
+  createdTaskId: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AiCaptureResult {
+  created: Task[]
+  inboxItems: AiInboxItem[]
+  failed: Array<{
+    rawInput: string
+    reason: string
+  }>
 }

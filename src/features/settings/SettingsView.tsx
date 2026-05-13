@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { S } from '@/design/tokens'
 import * as api from '@/lib/api'
 import { thisMonthRange } from '@/lib/date'
+import { AiModelSettings } from '@/features/ai/AiModelSettings'
+
+export type SettingsSection = 'ai' | 'backup' | 'export' | 'paths'
 
 const sectionLabel: React.CSSProperties = {
   fontSize: 10.5,
@@ -46,7 +49,11 @@ function deriveExportBaseDir(backupDir: string) {
   return lastSlash > 0 ? normalized.slice(0, lastSlash) : null
 }
 
-export function SettingsView() {
+interface Props {
+  section: SettingsSection
+}
+
+export function SettingsView({ section }: Props) {
   const [backupDir, setBackupDir] = useState<string>('')
   const [jsonPath, setJsonPath] = useState(DEFAULT_JSON_PATH)
   const [mdPath, setMdPath] = useState(DEFAULT_MD_PATH)
@@ -129,69 +136,176 @@ export function SettingsView() {
     fontFamily: S.font,
   }
 
-  return (
-    <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
-      <div style={{ width: '100%', maxWidth: 560 }}>
-      <div style={{ fontSize: S.heroSize, fontWeight: S.heroWeight, marginBottom: 24 }}>
-        设置
-      </div>
+  let body: React.ReactNode = null
 
-      {/* 备份区块 */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={sectionLabel}>数据备份</div>
-        <div style={{ fontSize: 12, color: S.fgMuted, marginBottom: 12 }}>
-          默认目录：{backupDir || '加载中…'}
+  if (section === 'ai') {
+    body = <AiModelSettings />
+  } else if (section === 'backup') {
+    body = (
+      <section>
+        <div style={{ fontSize: 18, fontWeight: 700, color: S.fg, marginBottom: 4 }}>
+          数据备份
+        </div>
+        <div style={{ fontSize: 12, color: S.fgMuted, lineHeight: 1.6, marginBottom: 18 }}>
+          手动创建一份当前数据库备份，默认备份目录由桌面应用自动管理。
+        </div>
+        <div style={sectionLabel}>默认目录</div>
+        <div
+          style={{
+            border: S.hairline,
+            borderRadius: 8,
+            background: '#FFFEFC',
+            padding: '11px 12px',
+            fontSize: 13,
+            color: S.fg,
+            marginBottom: 14,
+            wordBreak: 'break-all',
+          }}
+        >
+          {backupDir || '加载中…'}
         </div>
         <button disabled={loading} onClick={handleBackup} style={btnStyle}>
           立即备份
         </button>
-      </div>
-
-      {/* 导出区块 */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={sectionLabel}>数据导出</div>
-
-        {/* 导出 JSON */}
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="json-path" style={labelStyle}>输出路径</label>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      </section>
+    )
+  } else if (section === 'export') {
+    body = (
+      <section>
+        <div style={{ fontSize: 18, fontWeight: 700, color: S.fg, marginBottom: 4 }}>
+          数据导出
+        </div>
+        <div style={{ fontSize: 12, color: S.fgMuted, lineHeight: 1.6, marginBottom: 18 }}>
+          将当前数据导出为 JSON 或本月 Markdown。输出路径可在“输出路径”中调整。
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ExportAction
+            title="完整 JSON"
+            path={jsonPath}
+            buttonLabel="导出 JSON"
+            loading={loading}
+            onClick={handleExportJson}
+          />
+          <ExportAction
+            title="本月 Markdown"
+            path={mdPath}
+            buttonLabel="导出本月 Markdown"
+            loading={loading}
+            onClick={handleExportMarkdown}
+          />
+        </div>
+      </section>
+    )
+  } else {
+    body = (
+      <section>
+        <div style={{ fontSize: 18, fontWeight: 700, color: S.fg, marginBottom: 4 }}>
+          输出路径
+        </div>
+        <div style={{ fontSize: 12, color: S.fgMuted, lineHeight: 1.6, marginBottom: 18 }}>
+          设置导出文件的默认保存位置。路径会在当前应用会话中用于后续导出。
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label htmlFor="json-path" style={labelStyle}>JSON 输出路径</label>
             <input
               id="json-path"
               style={inputStyle}
               value={jsonPath}
               onChange={e => setJsonPath(e.target.value)}
             />
-            <button disabled={loading} onClick={handleExportJson} style={btnStyle}>
-              导出 JSON
-            </button>
           </div>
-        </div>
-
-        {/* 导出本月 Markdown */}
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="md-path" style={labelStyle}>输出路径</label>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div>
+            <label htmlFor="md-path" style={labelStyle}>Markdown 输出路径</label>
             <input
               id="md-path"
               style={inputStyle}
               value={mdPath}
               onChange={e => setMdPath(e.target.value)}
             />
-            <button disabled={loading} onClick={handleExportMarkdown} style={btnStyle}>
-              导出本月 Markdown
-            </button>
           </div>
         </div>
-      </div>
+      </section>
+    )
+  }
 
-      {/* 反馈提示 */}
-      {msg && (
-        <div style={{ color: S.success, fontSize: 12 }}>{msg}</div>
-      )}
-      {err && (
-        <div style={{ color: S.warn, fontSize: 12 }}>{err}</div>
-      )}
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: S.contentPad }}>
+      <div style={{ width: '100%', maxWidth: 680 }}>
+        <div style={{ fontSize: S.heroSize, fontWeight: S.heroWeight, marginBottom: 24 }}>
+          设置
+        </div>
+        <div
+          style={{
+            background: S.cardBg,
+            border: S.cardBorder,
+            borderRadius: 12,
+            boxShadow: S.cardShadow,
+            padding: '22px 24px',
+          }}
+        >
+          {body}
+        </div>
+        {msg && (
+          <div style={{ color: S.success, fontSize: 12, marginTop: 14 }}>{msg}</div>
+        )}
+        {err && (
+          <div style={{ color: S.warn, fontSize: 12, marginTop: 14 }}>{err}</div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function ExportAction({
+  title,
+  path,
+  buttonLabel,
+  loading,
+  onClick,
+}: {
+  title: string
+  path: string
+  buttonLabel: string
+  loading: boolean
+  onClick: () => void
+}) {
+  return (
+    <div
+      style={{
+        border: S.hairline,
+        borderRadius: 9,
+        background: '#FFFEFC',
+        padding: 14,
+        display: 'flex',
+        gap: 14,
+        alignItems: 'center',
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: S.fg }}>{title}</div>
+        <div style={{ fontSize: 12, color: S.fgMuted, marginTop: 5, wordBreak: 'break-all' }}>
+          {path}
+        </div>
+      </div>
+      <button
+        disabled={loading}
+        onClick={onClick}
+        style={{
+          background: S.accent,
+          color: '#fff',
+          border: 'none',
+          borderRadius: S.inputRadius,
+          padding: '8px 14px',
+          fontSize: 13,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          opacity: loading ? 0.6 : 1,
+          fontFamily: S.font,
+          flexShrink: 0,
+        }}
+      >
+        {buttonLabel}
+      </button>
     </div>
   )
 }

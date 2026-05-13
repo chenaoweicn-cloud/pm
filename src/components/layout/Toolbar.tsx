@@ -5,10 +5,11 @@ interface Props {
   title: string
   count?: number | null
   openSearch: () => void
+  openAiInbox: () => void
   right?: ReactNode
 }
 
-export function Toolbar({ title, count, openSearch, right }: Props) {
+export function Toolbar({ title, count, openSearch, openAiInbox, right }: Props) {
   return (
     <div
       style={{
@@ -38,6 +39,37 @@ export function Toolbar({ title, count, openSearch, right }: Props) {
       )}
       <div style={{ flex: 1 }} />
       {right}
+      <button
+        type="button"
+        onClick={openAiInbox}
+        style={{
+          height: 26,
+          padding: '0 10px',
+          borderRadius: S.inputRadius,
+          background: S.accentSoft,
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12,
+          color: S.accent,
+          cursor: 'pointer',
+          fontFamily: S.font,
+        }}
+      >
+        <span>AI Inbox</span>
+        <span
+          style={{
+            fontSize: 10,
+            padding: '1px 5px',
+            borderRadius: 3,
+            background: 'rgba(201,98,45,0.12)',
+            fontFamily: 'SF Mono, monospace',
+          }}
+        >
+          ⌘⇧I
+        </span>
+      </button>
       <div
         onClick={openSearch}
         style={{
